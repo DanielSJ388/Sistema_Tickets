@@ -2,6 +2,7 @@
 // Backend: API de registro de usuarios para Sistema_Tickets
 // ============================================================
 
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -15,9 +16,7 @@ app.use(bodyParser.json());
 
 // 🔗 Conexión con MongoDB Atlas
 mongoose
-  .connect(
-    "mongodb+srv://ticketssistema722:wzApMxGtuX4ZlHc5@sistematickets.ytr4nea.mongodb.net/sistemaTickets?retryWrites=true&w=majority&appName=SistemaTickets"
-  )
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ Conectado a MongoDB Atlas"))
   .catch((err) => console.error("❌ Error de conexión:", err));
 
