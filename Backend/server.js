@@ -7,7 +7,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { registrarUsuario } = require("./server/user"); // Importa función de registro
+const { registrarUsuario, iniciarSesion } = require("./server/user"); // Importa funciones
 
 const app = express();
 
@@ -29,6 +29,20 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ message: resultado.message });
     }
     res.status(201).json({ message: resultado.message });
+  } catch (err) {
+    res.status(500).json({ message: "Error en el servidor", error: err });
+  }
+});
+
+// 📌 Ruta para iniciar sesión (POST /login)
+// Body esperado: { "identifier": "usuario_o_email", "password": "..." }
+app.post("/login", async (req, res) => {
+  try {
+    const resultado = await iniciarSesion(req.body);
+    if (!resultado.ok) {
+      return res.status(400).json({ message: resultado.message });
+    }
+    res.status(200).json({ message: resultado.message, user: resultado.user });
   } catch (err) {
     res.status(500).json({ message: "Error en el servidor", error: err });
   }
