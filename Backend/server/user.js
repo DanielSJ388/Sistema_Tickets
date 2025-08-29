@@ -3,7 +3,7 @@
 // ============================================================
 
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs"); // Para encriptar contraseñas
+const bcrypt = require("bcryptjs");
 
 // 📌 Modelo Usuario (colección "users")
 const UserSchema = new mongoose.Schema({
