@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autenticación - SistemaTickets</title>
+  <link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="logo">
+      <h1>🎫 SistemaTickets</h1>
+      <p>Gestión de tickets simplificada</p>
+    </div>
+
+    <!-- Formulario de Registro -->
+    <div id="registro-form" class="fade-in">
+      <div class="form-header">
+        <h2>Crear Cuenta</h2>
+        <p>Únete y comienza a gestionar tus tickets</p>
+      </div>
+      
+      <div class="input-group">
+        <input type="text" id="reg-username" placeholder="👤 Nombre de usuario" required>
+      </div>
+      
+      <div class="input-group">
+        <input type="email" id="reg-email" placeholder="📧 Correo electrónico" required>
+      </div>
+      
+      <div class="input-group">
+        <input type="password" id="reg-password" placeholder="🔒 Contraseña" required>
+      </div>
+      
+      <button class="btn-primary" onclick="registrar()">Crear Cuenta</button>
+      
+      <div class="toggle-section">
+        <span class="toggle-link" onclick="mostrarLogin()">¿Ya tienes cuenta? Inicia sesión</span>
+      </div>
+    </div>
+
+    <!-- Formulario de Login -->
+    <div id="login-form" class="hidden">
+      <div class="form-header">
+        <h2>Bienvenido de vuelta</h2>
+        <p>Accede a tu cuenta para continuar</p>
+      </div>
+      
+      <div class="input-group">
+        <input type="text" id="login-identifier" placeholder="👤 Usuario o correo" required>
+      </div>
+      
+      <div class="input-group">
+        <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
+      </div>
+      
+      <button class="btn-primary" onclick="iniciarSesion()">Iniciar Sesión</button>
+      
+      <div class="toggle-section">
+        <span class="toggle-link" onclick="mostrarRegistro()">¿No tienes cuenta? Regístrate</span>
+      </div>
+    </div>
+
+    <div id="mensaje"></div>
+  </div>
+
+  <script src="assets/js/auth.js"></script>
+</body>
+</html>

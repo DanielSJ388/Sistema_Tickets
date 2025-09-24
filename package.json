@@ -1,5 +1,14 @@
 {
   "dependencies": {
     "bcryptjs": "^3.0.2"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run frontend\"",
+    "frontend": "live-server Frontend --port=3001 --open=/dashboard.html",
+    "server": "npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "live-server": "^1.2.2"
   }
 }
