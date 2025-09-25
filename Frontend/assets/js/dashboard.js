@@ -4,8 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const usuarioInfo = localStorage.getItem('usuario');
   let token = localStorage.getItem('token');
   
+  console.log('=== DEBUG DASHBOARD.JS ===');
   console.log('Usuario en localStorage:', usuarioInfo);
   console.log('Token en localStorage:', token);
+  console.log('Todas las claves:', Object.keys(localStorage));
+  console.log('localStorage completo:', { ...localStorage });
   
   if (!usuarioInfo) {
     console.log('No hay usuario en localStorage, redirigiendo...');
@@ -47,6 +50,17 @@ document.addEventListener('DOMContentLoaded', () => {
   inicializarEventos();
   cargarTickets();
   cargarEstadisticas();
+  
+  // DEBUG: Función global para verificar localStorage
+  window.debugStorage = function() {
+    console.log('=== DEBUG STORAGE ===');
+    console.log('usuario:', localStorage.getItem('usuario'));
+    console.log('token:', localStorage.getItem('token'));
+    console.log('Todas las claves:', Object.keys(localStorage));
+    for (let key of Object.keys(localStorage)) {
+      console.log(`${key}:`, localStorage.getItem(key));
+    }
+  };
 });
 
 // --- INICIALIZACIÓN DE EVENTOS ---

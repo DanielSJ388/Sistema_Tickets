@@ -80,8 +80,8 @@ class SidebarComponent {
   }
 
   loadUserInfo() {
-    // Usar 'user' en lugar de 'usuario' para mantener consistencia con auth.js
-    const user = JSON.parse(localStorage.getItem('user'));
+    // Usar 'usuario' para mantener consistencia con auth.js y dashboard.js
+    const user = JSON.parse(localStorage.getItem('usuario'));
     const userInfoElement = document.getElementById('user-info');
     
     if (user && userInfoElement) {
@@ -91,7 +91,7 @@ class SidebarComponent {
 
   cerrarSesion() {
     if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      localStorage.removeItem('user');
+      localStorage.removeItem('usuario');
       window.location.href = 'auth.html';
     }
   }

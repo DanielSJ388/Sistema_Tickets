@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login - Sistema Tickets</title>
+</head>
+<body>
+    <h1>Prueba de Login</h1>
+    <div>
+        <button onclick="testLogin()">Probar Login</button>
+        <button onclick="checkStorage()">Verificar Storage</button>
+        <button onclick="clearStorage()">Limpiar Storage</button>
+    </div>
+    <div id="output" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            document.getElementById('output').innerHTML += '<p>' + message + '</p>';
+        }
+
+        async function testLogin() {
+            log('=== INICIANDO PRUEBA DE LOGIN ===');
+            
+            try {
+                const response = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier: 'testuser', password: '123456' })
+                });
+
+                log('Status: ' + response.status);
+                const data = await response.json();
+                log('Data recibida: ' + JSON.stringify(data));
+
+                if (response.ok) {
+                    log('Login exitoso, guardando usuario...');
+                    localStorage.setItem('usuario', JSON.stringify(data.user));
+                    log('Usuario guardado como: ' + JSON.stringify(data.user));
+                    
+                    // Verificar inmediatamente
+                    const saved = localStorage.getItem('usuario');
+                    log('Verificación inmediata - Usuario guardado: ' + saved);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+
+        function checkStorage() {
+            log('=== VERIFICANDO STORAGE ===');
+            const usuario = localStorage.getItem('usuario');
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            
+            log('usuario: ' + usuario);
+            log('user: ' + user);
+            log('token: ' + token);
+            log('Todas las claves: ' + JSON.stringify(Object.keys(localStorage)));
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            log('=== STORAGE LIMPIADO ===');
+        }
+
+        // Verificar al cargar
+        checkStorage();
+    </script>
+</body>
+</html>

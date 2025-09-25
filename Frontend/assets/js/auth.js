@@ -1,10 +1,35 @@
 // Verificar si ya hay un usuario logueado al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-  const user = localStorage.getItem('user');
-  if (user) {
-    // Si ya está logueado, redirigir al dashboard
-    window.location.href = 'dashboard.html';
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('=== INICIO DEBUG AUTH.JS ===');
+  
+  // LIMPIEZA COMPLETA: Forzar migración/limpieza de datos inconsistentes
+  const userAntiguo = localStorage.getItem('user');
+  const usuarioActual = localStorage.getItem('usuario');
+  
+  if (userAntiguo && !usuarioActual) {
+    console.log('Migrando de "user" a "usuario"');
+    localStorage.setItem('usuario', userAntiguo);
+    localStorage.removeItem('user');
+  } else if (userAntiguo && usuarioActual) {
+    console.log('Limpiando clave duplicada "user"');
+    localStorage.removeItem('user');
   }
+  
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('usuario');
+  
+  console.log('Token encontrado:', token);
+  console.log('Usuario encontrado:', user);
+  console.log('Todas las claves en localStorage:', Object.keys(localStorage));
+  
+  // Si hay usuario, redirigir directamente al dashboard (el backend no usa JWT)
+  if (user) {
+    console.log('Usuario encontrado en localStorage, redirigiendo al dashboard');
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  
+  console.log('No hay usuario, mostrando formulario de login');
 });
 
 // Funciones para alternar entre formularios
@@ -109,6 +134,9 @@ async function iniciarSesion() {
   limpiarMensaje();
 
   try {
+    console.log('=== INICIANDO LOGIN ===');
+    console.log('Enviando datos:', { identifier, password: '***' });
+    
     const respuesta = await fetch("http://localhost:3000/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -116,22 +144,38 @@ async function iniciarSesion() {
     });
 
     const data = await respuesta.json();
+    console.log('Respuesta del servidor:', data);
+    console.log('Status de la respuesta:', respuesta.status);
     
     if (respuesta.ok) {
       mostrarMensaje(`🎉 ¡Bienvenido, ${data.user.username}!`, false);
       
-      // Guardar datos del usuario en localStorage
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Debug: mostrar información en consola
+      console.log('Login exitoso - Usuario:', data.user);
+      
+      // El backend no usa JWT, así que no esperamos token
+      // Solo guardamos la información del usuario
+      const usuarioParaGuardar = JSON.stringify(data.user);
+      console.log('Datos que se van a guardar:', usuarioParaGuardar);
+      
+      localStorage.setItem('usuario', usuarioParaGuardar);
+      console.log('Usuario guardado en localStorage');
+      
+      // Verificar que realmente se guardó
+      const usuarioGuardado = localStorage.getItem('usuario');
+      console.log('Verificación - Usuario guardado:', usuarioGuardado);
+      console.log('Todas las claves después del guardado:', Object.keys(localStorage));
       
       // Redirigir al dashboard después de 1.5 segundos
       setTimeout(() => {
+        console.log('Redirigiendo al dashboard...');
         window.location.href = 'dashboard.html';
       }, 1500);
     } else {
       mostrarMensaje(`❌ ${data.message}`, true);
     }
   } catch (error) {
-    console.error('Error de conexión:', error);
+    console.error('❌ Error de conexión:', error);
     mostrarMensaje("🔌 Error de conexión con el servidor. ¿Está ejecutándose el backend?", true);
   } finally {
     mostrarCargando(boton, false);

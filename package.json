@@ -1,8 +1,14 @@
 {
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "fs": "0.0.1-security",
     "mongodb-memory-server": "^10.2.1",
-    "mongoose": "^8.18.2"
+    "mongoose": "^8.18.2",
+    "multer": "^2.0.2",
+    "path": "^0.12.7"
   },
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run frontend\"",

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpiar Storage</title>
+</head>
+<body>
+    <h1>Herramienta de Limpieza</h1>
+    <button onclick="limpiarStorage()">Limpiar localStorage</button>
+    <button onclick="mostrarStorage()">Mostrar localStorage</button>
+    <div id="output"></div>
+
+    <script>
+        function limpiarStorage() {
+            localStorage.clear();
+            document.getElementById('output').innerHTML = '<p style="color: green;">✅ localStorage limpiado completamente</p>';
+        }
+
+        function mostrarStorage() {
+            let output = '<h3>Contenido de localStorage:</h3>';
+            if (localStorage.length === 0) {
+                output += '<p style="color: orange;">localStorage está vacío</p>';
+            } else {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    output += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+            }
+            document.getElementById('output').innerHTML = output;
+        }
+
+        // Mostrar contenido al cargar
+        mostrarStorage();
+    </script>
+</body>
+</html>
