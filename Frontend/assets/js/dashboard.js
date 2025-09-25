@@ -2,74 +2,71 @@
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Verificar si el usuario está autenticado
   const usuarioInfo = localStorage.getItem('usuario');
-  const token = localStorage.getItem('token');
+  let token = localStorage.getItem('token');
   
-  // Debug: mostrar qué hay en localStorage
   console.log('Usuario en localStorage:', usuarioInfo);
   console.log('Token en localStorage:', token);
   
-  if (usuarioInfo) {
-    const usuario = JSON.parse(usuarioInfo);
-    // Si no hay token, crear uno temporal o usar el usuario como autenticación
-    if (!token) {
-      console.log('No hay token, creando autenticación temporal');
-      localStorage.setItem('token', `temp_${Date.now()}`);
-    }
-    
-    // Mostrar información del usuario en el dashboard
-    document.getElementById('user-info').textContent = `👤 ${usuario.username || usuario.nombre}`;
-    
-    // Esperar a que el sidebar se cargue antes de actualizar la info del usuario
-    setTimeout(() => {
-      const usuarioElement = document.getElementById('usuarioActual');
-      if (usuarioElement && !usuarioElement.innerHTML) {
-        usuarioElement.innerHTML = `
-          <div class="user-avatar">
-            <i class="fas fa-user-circle"></i>
-          </div>
-          <div class="user-details">
-            <div class="user-name">${usuario.username || usuario.nombre}</div>
-            <div class="user-role">${usuario.rol || 'Usuario'}</div>
-          </div>
-        `;
-      }
-    }, 100);
-  } else {
-    // Si no hay información, redirigir al login
+  if (!usuarioInfo) {
     console.log('No hay usuario en localStorage, redirigiendo...');
     window.location.href = 'auth.html';
     return;
   }
+
+  const usuario = JSON.parse(usuarioInfo);
   
-  // 2. Inicializar eventos del formulario
+  // Si no hay token, crear uno temporal
+  if (!token) {
+    token = `temp_${Date.now()}`;
+    localStorage.setItem('token', token);
+  }
+  
+  // Mostrar información del usuario en el dashboard
+  const userInfoElement = document.getElementById('user-info');
+  if (userInfoElement) {
+    userInfoElement.textContent = `👤 ${usuario.username || usuario.nombre}`;
+  }
+  
+  // Actualizar sidebar con info del usuario
+  setTimeout(() => {
+    const usuarioElement = document.getElementById('usuarioActual');
+    if (usuarioElement && !usuarioElement.innerHTML) {
+      usuarioElement.innerHTML = `
+        <div class="user-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="user-details">
+          <div class="user-name">${usuario.username || usuario.nombre}</div>
+          <div class="user-role">${usuario.rol || 'Usuario'}</div>
+        </div>
+      `;
+    }
+  }, 100);
+  
+  // 2. Inicializar eventos y cargar datos
   inicializarEventos();
-  
-  // 3. Cargar los tickets existentes
   cargarTickets();
+  cargarEstadisticas();
 });
 
 // --- INICIALIZACIÓN DE EVENTOS ---
 function inicializarEventos() {
   const ticketForm = document.getElementById('ticketForm');
-  const adjuntosInput = document.getElementById('adjuntos');
-  const descripcionTextarea = document.getElementById('descripcion');
+  const fileInput = document.getElementById('archivo');
+  const fileName = document.getElementById('file-name');
 
   if (ticketForm) {
     ticketForm.addEventListener('submit', manejarEnvioTicket);
   }
 
-  if (adjuntosInput) {
-    adjuntosInput.addEventListener('change', mostrarNombreArchivo);
-  }
-
-  if (descripcionTextarea) {
-    descripcionTextarea.addEventListener('input', ajustarAlturaTextarea);
+  if (fileInput && fileName) {
+    fileInput.addEventListener('change', function() {
+      fileName.textContent = this.files.length > 0 ? this.files[0].name : '';
+    });
   }
 }
 
-// --- MANEJO DE EVENTOS DEL FORMULARIO ---
-
-// Enviar el formulario para crear un nuevo ticket
+// --- MANEJO DEL FORMULARIO DE TICKETS ---
 async function manejarEnvioTicket(e) {
   e.preventDefault();
 
@@ -82,288 +79,251 @@ async function manejarEnvioTicket(e) {
     return;
   }
 
-  // Si no hay token, crear uno temporal
-  if (!token) {
-    token = `temp_${Date.now()}`;
-    localStorage.setItem('token', token);
+  // Obtener datos del formulario
+  const titulo = document.getElementById('titulo').value.trim();
+  const descripcion = document.getElementById('descripcion').value.trim();
+  const categoria = document.getElementById('categoria').value;
+  const archivoInput = document.getElementById('archivo');
+
+  // Validar campos obligatorios
+  if (!titulo || !descripcion || !categoria) {
+    alert('Por favor, completa todos los campos obligatorios.');
+    return;
   }
 
-  // Crear ticket localmente mientras no hay backend
-  const nuevoTicket = {
-    id: Date.now(),
-    titulo: document.getElementById('titulo').value,
-    descripcion: document.getElementById('descripcion').value,
-    categoria: document.getElementById('categoria').value,
-    usuario_id: usuario.id || usuario._id || usuario.username,
-    estado: 'abierto',
-    prioridad: 'media',
-    fecha_creacion: new Date().toISOString(),
-    usuario_nombre: usuario.username || usuario.nombre
-  };
-
-  // Guardar en localStorage temporalmente
-  let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
-  tickets.push(nuevoTicket);
-  localStorage.setItem('tickets', JSON.stringify(tickets));
-
-  // Limpiar formulario
-  document.getElementById('ticketForm').reset();
-  document.getElementById('fileName').textContent = '';
-  alert('Ticket creado exitosamente (guardado localmente)');
-  
-  // Recargar tickets
-  cargarTickets();
-
-  // TODO: Cuando tengas el backend funcionando, descomenta esto:
-  /*
-  try {
-    const formData = new FormData();
-    formData.append('titulo', document.getElementById('titulo').value);
-    formData.append('descripcion', document.getElementById('descripcion').value);
-    formData.append('categoria', document.getElementById('categoria').value);
-    formData.append('usuario_id', usuario.id || usuario._id || usuario.username);
-
-    const archivos = document.getElementById('adjuntos').files;
-    if (archivos.length > 0) {
-      formData.append('adjunto', archivos[0]);
+  // Validar tamaño del archivo si existe
+  if (archivoInput.files.length > 0) {
+    const archivo = archivoInput.files[0];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    if (archivo.size > maxSize) {
+      alert('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
+      return;
     }
+    
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+                         'application/pdf', 'text/plain', 
+                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                         'application/msword'];
+    
+    if (!allowedTypes.includes(archivo.type)) {
+      alert('Tipo de archivo no permitido. Solo se permiten: JPG, PNG, GIF, PDF, TXT, DOCX, DOC');
+      return;
+    }
+  }
 
-    const response = await fetch('http://localhost:3001/api/tickets', {
+  // Crear FormData para enviar archivos
+  const formData = new FormData();
+  formData.append('Title', titulo);
+  formData.append('Description', descripcion);
+  formData.append('categoria', categoria);
+  formData.append('AssignedTo', usuario.id || usuario._id || usuario.username);
+  formData.append('usuario_nombre', usuario.username || usuario.nombre);
+  
+  // Agregar archivo si existe
+  if (archivoInput.files.length > 0) {
+    formData.append('archivo', archivoInput.files[0]);
+  }
+
+  try {
+    // Intentar crear ticket en backend
+    const response = await fetch('http://localhost:3000/tickets', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
+        // No agregar Content-Type cuando usamos FormData
       },
       body: formData
     });
 
     if (response.ok) {
       const result = await response.json();
+      console.log('Ticket creado en backend:', result);
+      
+      // Limpiar formulario
       document.getElementById('ticketForm').reset();
-      document.getElementById('fileName').textContent = '';
+      document.getElementById('file-name').textContent = '';
+      
       alert('Ticket creado exitosamente');
-      cargarTickets();
+      cargarTickets(); // Recargar lista
+      
     } else {
       const errorData = await response.json();
-      alert(`Error al crear el ticket: ${errorData.message || 'Error desconocido'}`);
+      throw new Error(errorData.message || `Error del servidor: ${response.status}`);
     }
+    
   } catch (error) {
-    console.error('Error de conexión al crear ticket:', error);
-    alert('Hubo un error de conexión al crear el ticket. Verifica tu conexión a internet.');
+    console.error('Error de conexión:', error);
+    alert(`Error al crear el ticket: ${error.message}`);
+    
+    // Como respaldo, guardar localmente (sin archivo)
+    const ticketData = {
+      Title: titulo,
+      Description: descripcion,
+      categoria: categoria,
+      AssignedTo: usuario.id || usuario._id || usuario.username,
+      usuario_nombre: usuario.username || usuario.nombre
+    };
+    
+    guardarTicketLocalmente(ticketData);
+    
+    // Limpiar formulario
+    document.getElementById('ticketForm').reset();
+    document.getElementById('file-name').textContent = '';
+    
+    alert('Ticket guardado localmente (sin archivo adjunto)');
+    cargarTickets();
   }
-  */
 }
 
-// Mostrar el nombre del archivo seleccionado
-function mostrarNombreArchivo() {
-  const fileNameDisplay = document.getElementById('fileName');
-  if (this.files.length > 0) {
-    fileNameDisplay.textContent = this.files[0].name;
-  } else {
-    fileNameDisplay.textContent = '';
-  }
+// --- FUNCIONES AUXILIARES ---
+function guardarTicketLocalmente(ticketData) {
+  let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+  
+  const nuevoTicket = {
+    ...ticketData,
+    Number: Date.now(), // ID único temporal
+    Status: 'Open',
+    CreatedAt: new Date().toISOString(),
+    local: true // Marca para identificar tickets locales
+  };
+  
+  tickets.push(nuevoTicket);
+  localStorage.setItem('tickets', JSON.stringify(tickets));
 }
 
-// Hacer que el textarea de descripción crezca automáticamente
-function ajustarAlturaTextarea() {
-  this.style.height = 'auto';
-  this.style.height = (this.scrollHeight) + 'px';
-}
-
-// --- FUNCIONES ASÍNCRONAS Y AUXILIARES ---
-
-// Cargar la lista de tickets desde el servidor
 async function cargarTickets() {
   try {
-    // Usar datos locales mientras no hay backend
-    const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+    // Intentar cargar desde backend
+    const response = await fetch('http://localhost:3000/tickets');
     
-    // Si no hay tickets locales, crear algunos de ejemplo
-    if (tickets.length === 0) {
-      const ticketsEjemplo = [
-        {
-          id: 1,
-          titulo: "Problema con login",
-          descripcion: "No puedo acceder a mi cuenta desde ayer",
-          categoria: "soporte_tecnico",
-          estado: "abierto",
-          prioridad: "alta",
-          fecha_creacion: new Date().toISOString(),
-          usuario_nombre: "Usuario Demo"
-        },
-        {
-          id: 2,
-          titulo: "Consulta sobre facturación",
-          descripcion: "Necesito información sobre mi última factura",
-          categoria: "facturacion",
-          estado: "en_proceso",
-          prioridad: "media",
-          fecha_creacion: new Date().toISOString(),
-          usuario_nombre: "Usuario Demo"
-        },
-        {
-          id: 3,
-          titulo: "Solicitud de información",
-          descripcion: "Quiero saber más sobre los nuevos productos",
-          categoria: "ventas",
-          estado: "cerrado",
-          prioridad: "baja",
-          fecha_creacion: new Date().toISOString(),
-          usuario_nombre: "Usuario Demo"
-        }
-      ];
-      localStorage.setItem('tickets', JSON.stringify(ticketsEjemplo));
-      tickets.push(...ticketsEjemplo);
+    if (response.ok) {
+      const tickets = await response.json();
+      console.log('Tickets cargados desde backend:', tickets);
+      mostrarTickets(tickets);
+      actualizarEstadisticas(tickets);
+      return;
     }
-    
-    const lista = document.getElementById('listaTickets');
-    if (tickets.length === 0) {
-      lista.innerHTML = '<p>No hay tickets disponibles. ¡Crea el primero!</p>';
-    } else {
-      lista.innerHTML = tickets.map(ticket => `
-        <div class="ticket-item">
-          <div class="ticket-info">
-            <h4>#${ticket.id} - ${ticket.titulo}</h4>
-            <p>${ticket.descripcion.substring(0, 80)}...</p>
-            <small>Por: ${ticket.usuario_nombre} - ${new Date(ticket.fecha_creacion).toLocaleDateString()}</small>
-          </div>
-          <div class="ticket-details">
-            <span class="badge badge-${ticket.prioridad}">${ticket.prioridad}</span>
-            <span class="ticket-status status-${ticket.estado}">${ticket.estado}</span>
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    actualizarEstadisticas(tickets);
-
-    // TODO: Cuando tengas el backend funcionando, reemplaza todo lo anterior con esto:
-    /*
-    const token = localStorage.getItem('token');
-    
-    let response = await fetch('http://localhost:3001/api/tickets', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const tickets = await response.json();
-    // ... resto del código de renderizado
-    */
     
   } catch (error) {
-    console.error('Error al cargar tickets:', error);
-    document.getElementById('listaTickets').innerHTML = '<p>Usando datos locales de ejemplo.</p>';
+    console.error('Error al conectar con backend:', error);
+  }
+  
+  // Si no hay conexión, usar datos locales
+  console.log('Usando datos locales...');
+  const ticketsLocales = JSON.parse(localStorage.getItem('tickets')) || [];
+  
+  // Si no hay tickets locales, crear ejemplos
+  if (ticketsLocales.length === 0) {
+    const ticketsEjemplo = crearTicketsEjemplo();
+    localStorage.setItem('tickets', JSON.stringify(ticketsEjemplo));
+    mostrarTickets(ticketsEjemplo);
+    actualizarEstadisticas(ticketsEjemplo);
+  } else {
+    mostrarTickets(ticketsLocales);
+    actualizarEstadisticas(ticketsLocales);
   }
 }
 
-// Actualizar las tarjetas de estadísticas
-function actualizarEstadisticas(tickets) {
-  document.getElementById('totalTickets').textContent = tickets.length;
-  document.getElementById('ticketsAbiertos').textContent = tickets.filter(t => t.estado === 'abierto').length;
-  document.getElementById('ticketsEnProceso').textContent = tickets.filter(t => t.estado === 'en_proceso').length;
-  document.getElementById('ticketsCerrados').textContent = tickets.filter(t => t.estado === 'cerrado').length;
+function mostrarTickets(tickets) {
+  const lista = document.getElementById('listaTickets');
+  
+  if (!lista) return;
+  
+  if (tickets.length === 0) {
+    lista.innerHTML = '<p>No hay tickets disponibles. ¡Crea el primero!</p>';
+    return;
+  }
+  
+  lista.innerHTML = tickets.map(ticket => {
+    const fecha = new Date(ticket.CreatedAt || ticket.fecha_creacion).toLocaleDateString('es-ES');
+    const estado = (ticket.Status || ticket.estado || 'Open').toLowerCase();
+    const prioridad = (ticket.Priority || ticket.prioridad || 'Medium').toLowerCase();
+    
+    // Indicador de archivo adjunto
+    const tieneArchivo = ticket.archivo_path ? '<i class="fas fa-paperclip" title="Archivo adjunto"></i>' : '';
+    
+    // Información del archivo (mostrar nombre original si existe)
+    const infoArchivo = ticket.archivo_nombre_original 
+      ? `<small><i class="fas fa-file"></i> ${ticket.archivo_nombre_original}</small>` 
+      : ticket.archivo_nombre 
+        ? `<small><i class="fas fa-file"></i> ${ticket.archivo_nombre}</small>`
+        : '';
+    
+    return `
+      <div class="ticket-item">
+        <div class="ticket-info">
+          <h4>#${ticket.Number || ticket.id} - ${ticket.Title || ticket.titulo} ${tieneArchivo}</h4>
+          <p>${(ticket.Description || ticket.descripcion).substring(0, 80)}...</p>
+          <small>Por: ${ticket.usuario_nombre || 'Usuario'} - ${fecha} ${ticket.local ? '(Local)' : ''}</small>
+          ${infoArchivo}
+        </div>
+        <div class="ticket-details">
+          <span class="badge badge-${prioridad}">${prioridad}</span>
+          <span class="ticket-status status-${estado}">${estado}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-// Cerrar la sesión del usuario (mantener para compatibilidad)
+function actualizarEstadisticas(tickets) {
+  const total = tickets.length;
+  const pendientes = tickets.filter(t => (t.Status || t.estado) === 'Open' || (t.Status || t.estado) === 'abierto').length;
+  const resueltos = tickets.filter(t => (t.Status || t.estado) === 'Closed' || (t.Status || t.estado) === 'cerrado').length;
+  const altaPrioridad = tickets.filter(t => (t.Priority || t.prioridad) === 'High' || (t.Priority || t.prioridad) === 'alta').length;
+  
+  document.getElementById('total-tickets').textContent = total;
+  document.getElementById('pendientes').textContent = pendientes;
+  document.getElementById('resueltos').textContent = resueltos;
+  document.getElementById('alta-prioridad').textContent = altaPrioridad;
+}
+
+function crearTicketsEjemplo() {
+  return [
+    {
+      Number: 1,
+      Title: "Problema con login",
+      Description: "No puedo acceder a mi cuenta desde ayer",
+      Status: "Open",
+      Priority: "Medium", // Prioridad asignada por defecto
+      CreatedAt: new Date().toISOString(),
+      usuario_nombre: "Usuario Demo",
+      categoria: "tecnico"
+    },
+    {
+      Number: 2,
+      Title: "Consulta sobre facturación",
+      Description: "Necesito información sobre mi última factura",
+      Status: "In Progress",
+      Priority: "Medium", // Prioridad asignada por defecto
+      CreatedAt: new Date(Date.now() - 86400000).toISOString(),
+      usuario_nombre: "Usuario Demo",
+      categoria: "consulta"
+    },
+    {
+      Number: 3,
+      Title: "Solicitud de información",
+      Description: "Quiero saber más sobre los nuevos productos",
+      Status: "Closed",
+      Priority: "Medium", // Prioridad asignada por defecto
+      CreatedAt: new Date(Date.now() - 172800000).toISOString(),
+      usuario_nombre: "Usuario Demo",
+      categoria: "solicitud"
+    }
+  ];
+}
+
+function cargarEstadisticas() {
+  // Esta función se ejecuta después de cargarTickets()
+  // Las estadísticas se actualizan automáticamente
+}
+
 function cerrarSesion() {
   if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
     localStorage.removeItem('usuario');
     localStorage.removeItem('token');
-    window.location.href = 'login.html';
-  }
-}
-
-// Verificar autenticación al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-  const user = localStorage.getItem('user');
-  if (!user) {
-    // Si no está logueado, redirigir al login
     window.location.href = 'auth.html';
-    return;
   }
-  
-  // Mostrar información del usuario
-  const userData = JSON.parse(user);
-  document.getElementById('user-info').textContent = `👤 ${userData.username}`;
-  
-  // Cargar datos del dashboard
-  cargarEstadisticas();
-});
-
-function cerrarSesion() {
-  localStorage.removeItem('user');
-  window.location.href = 'auth.html';
-}
-
-function cargarEstadisticas() {
-  // Aquí puedes hacer llamadas a la API para cargar estadísticas reales
-  // Por ahora mostramos datos de ejemplo
-  document.getElementById('total-tickets').textContent = '12';
-  document.getElementById('pendientes').textContent = '3';
-  document.getElementById('resueltos').textContent = '9';
-  
-  // Agregar el contenido faltante para "Alta Prioridad"
-  const altaPrioridadCard = document.querySelector('#alta-prioridad').closest('.stat-card');
-  if (altaPrioridadCard) {
-    altaPrioridadCard.innerHTML = `
-      <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
-        <i class="fas fa-exclamation-triangle"></i>
-      </div>
-      <div>
-        <div class="stat-number" id="alta-prioridad">2</div>
-        <div class="stat-label">Alta Prioridad</div>
-      </div>
-    `;
-  }
-}
-
-// Manejo del formulario de crear ticket
-document.addEventListener('DOMContentLoaded', function() {
-  const ticketForm = document.getElementById('ticketForm');
-  const fileInput = document.getElementById('archivo');
-  const fileName = document.getElementById('file-name');
-  
-  // Mostrar nombre del archivo seleccionado
-  if (fileInput) {
-    fileInput.addEventListener('change', function() {
-      if (this.files && this.files[0]) {
-        fileName.textContent = this.files[0].name;
-      } else {
-        fileName.textContent = '';
-      }
-    });
-  }
-  
-  // Manejar envío del formulario
-  if (ticketForm) {
-    ticketForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      crearTicket();
-    });
-  }
-});
-
-function crearTicket() {
-  const titulo = document.getElementById('titulo').value.trim();
-  const prioridad = document.getElementById('prioridad').value;
-  const categoria = document.getElementById('categoria').value;
-  const descripcion = document.getElementById('descripcion').value.trim();
-  
-  if (!titulo || !prioridad || !categoria || !descripcion) {
-    alert('Por favor, completa todos los campos obligatorios.');
-    return;
-  }
-  
-  // Aquí puedes agregar la lógica para enviar el ticket al backend
-  console.log('Creando ticket:', { titulo, prioridad, categoria, descripcion });
-  
-  // Simular creación exitosa
-  alert('Ticket creado exitosamente');
-  document.getElementById('ticketForm').reset();
-  document.getElementById('file-name').textContent = '';
 }
