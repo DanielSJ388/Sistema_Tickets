@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const fs = require("fs"); // Agregar fs para manejo de archivos
 
 // 📌 Modelo Ticket (colección "tickets"
 const TicketSchema = new mongoose.Schema({
@@ -77,10 +78,53 @@ async function getTicketById(ticketId) {
   return await Ticket.findById(ticketId);
 }
 
+// 📌 Controlador para crear ticket con archivo
+async function createTicketController(req, res) {
+  try {
+    console.log('Datos recibidos para crear ticket:', req.body);
+    console.log('Archivo recibido:', req.file);
+    
+    // Preparar datos del ticket
+    const ticketData = {
+      Title: req.body.Title,
+      Description: req.body.Description,
+      Priority: req.body.Priority || "Medium",
+      AssignedTo: req.body.AssignedTo || null,
+      categoria: req.body.categoria,
+      usuario_nombre: req.body.usuario_nombre
+    };
+    
+    // Si hay archivo, agregar la información
+    if (req.file) {
+      ticketData.archivo_path = req.file.path;
+      ticketData.archivo_nombre_original = req.file.originalname;
+      ticketData.archivo_nombre_servidor = req.file.filename;
+      ticketData.archivo_size = req.file.size;
+      ticketData.archivo_mimetype = req.file.mimetype;
+      
+      console.log(`Archivo guardado: ${req.file.originalname} -> ${req.file.filename}`);
+    }
+    
+    const nuevoTicket = await createTicket(ticketData);
+    console.log('Ticket creado exitosamente:', nuevoTicket);
+    res.status(201).json(nuevoTicket);
+  } catch (err) {
+    console.error('Error al crear ticket:', err);
+    // Si hay error y se subió un archivo, eliminarlo
+    if (req.file) {
+      fs.unlink(req.file.path, (unlinkErr) => {
+        if (unlinkErr) console.error('Error al eliminar archivo:', unlinkErr);
+      });
+    }
+    res.status(500).json({ message: "Error al crear ticket", error: err.message });
+  }
+}
+
 module.exports = {
   createTicket,
   getAllTickets,
   getTicketsByUser,
   updateTicketStatus,
   getTicketById,
+  createTicketController, // Exportar el nuevo controlador
 };
