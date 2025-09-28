@@ -9,7 +9,8 @@ const bcrypt = require("bcryptjs");
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true }, // nombre de usuario único
   email:    { type: String, required: true, unique: true, trim: true, lowercase: true }, // correo único
-  password: { type: String, required: true }                // contraseña encriptada
+  password: { type: String, required: true },                // contraseña encriptada
+  rol: { type: String, default: 'Usuario', enum: ['Usuario', 'Administrador', 'Soporte'] }
 });
 const User = mongoose.model("User", UserSchema);
 
@@ -84,4 +85,8 @@ async function iniciarSesion(datos) {
   };
 }
 
-module.exports = { registrarUsuario, iniciarSesion };
+async function obtenerUsuarios() {
+  return await User.find({}, 'username email rol'); // Incluir rol en la respuesta
+}
+
+module.exports = { registrarUsuario, iniciarSesion, obtenerUsuarios };

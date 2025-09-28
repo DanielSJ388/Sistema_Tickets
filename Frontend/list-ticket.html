@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tickets - SistemaTickets</title>
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- El sidebar se insertará aquí automáticamente -->
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <div class="main-header">
+                <h2>Mis Tickets Asignados</h2>
+                <p>Tickets que han sido asignados a ti</p>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table class="tickets-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Creado por</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsTableBody">
+                            <tr>
+                                <td colspan="7" class="loading">Cargando tickets...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para ver detalles del ticket -->
+    <div id="detalleTicketModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-ticket-alt"></i>
+                    Ticket <span id="detalleTicketId">#000</span>
+                </h2>
+                <span class="close" onclick="cerrarModalDetalle()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="ticket-detail-grid">
+                    <div class="detail-section">
+                        <h4>Información General</h4>
+                        <div class="detail-item">
+                            <label>Título:</label>
+                            <span id="detalleTitulo">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Estado:</label>
+                            <span id="detalleEstado">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Prioridad:</label>
+                            <span id="detallePrioridad">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Categoría:</label>
+                            <span id="detalleCategoria">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Creado por:</label>
+                            <span id="detalleUsuario">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Fecha:</label>
+                            <span id="detalleFecha">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Descripción</h4>
+                        <div class="descripcion-content">
+                            <p id="detalleDescripcion">-</p>
+                        </div>
+                        
+                        <div id="detalleArchivo" class="archivo-section">
+                            <!-- Información del archivo se insertará aquí -->
+                        </div>
+
+                        <div class="comentarios-section">
+                            <h4>Comentarios</h4>
+                            <div id="detalleComentarios" class="comentarios-list">
+                                <p class="no-comments">No hay comentarios aún</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-success" id="btnAtenderDesdeDetalle">
+                    <i class="fas fa-wrench"></i>
+                    Atender Ticket
+                </button>
+                <button class="btn btn-secondary" onclick="cerrarModalDetalle()">
+                    <i class="fas fa-times"></i>
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth-utils.js"></script>
+    <script src="assets/js/sidebar-component.js"></script>
+    <script src="assets/js/list-ticket.js"></script>
+</body>
+</html>

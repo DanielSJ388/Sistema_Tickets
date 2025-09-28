@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SistemaTickets</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -64,56 +65,6 @@
 
             <!-- Grid Principal -->
             <div class="dashboard-grid">
-                <!-- Formulario para Crear Ticket -->
-                <div class="card">
-                    <h3>
-                        <i class="fas fa-plus-circle"></i>
-                        Crear Nuevo Ticket
-                    </h3>
-                    
-                    <form id="ticketForm">
-                        <div class="form-group">
-                            <label for="titulo">Título del Ticket:</label>
-                            <input type="text" id="titulo" name="titulo" placeholder="Describe brevemente el problema" required>
-                        </div>
-
-                        <div class="dashboard-grid-inner">
-                            <div class="form-group">
-                                <label for="categoria">Categoría:</label>
-                                <select id="categoria" name="categoria" required>
-                                    <option value="">Selecciona categoría</option>
-                                    <option value="tecnico">Problema Técnico</option>
-                                    <option value="consulta">Consulta General</option>
-                                    <option value="solicitud">Solicitud de Servicio</option>
-                                    <option value="reporte">Reporte de Error</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="descripcion">Descripción Detallada:</label>
-                            <textarea id="descripcion" name="descripcion" rows="4" placeholder="Proporciona todos los detalles relevantes del problema..." required></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Archivo Adjunto (Opcional):</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="archivo" name="archivo" class="file-input" accept=".jpg,.jpeg,.png,.pdf,.txt,.docx">
-                                <label for="archivo" class="file-input-label">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Seleccionar archivo</span>
-                                </label>
-                                <span class="file-name" id="file-name"></span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn">
-                            <i class="fas fa-paper-plane"></i>
-                            Crear Ticket
-                        </button>
-                    </form>
-                </div>
-
                 <!-- Lista de Tickets Recientes -->
                 <div class="card">
                     <h3>
@@ -129,15 +80,151 @@
         </main>
     </div>
 
+    <!-- Modal para ver detalles del ticket -->
+    <div id="ticketModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-ticket-alt"></i>
+                    Ticket <span id="modalTicketId">#000</span>
+                </h2>
+                <span class="close" onclick="cerrarModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="ticket-detail-grid">
+                    <div class="detail-section">
+                        <h4>Información General</h4>
+                        <div class="detail-item">
+                            <label>Título:</label>
+                            <span id="modalTitulo">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Estado:</label>
+                            <span id="modalEstado">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Prioridad:</label>
+                            <span id="modalPrioridad">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Categoría:</label>
+                            <span id="modalCategoria">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Creado por:</label>
+                            <span id="modalUsuario">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Fecha:</label>
+                            <span id="modalFecha">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Descripción</h4>
+                        <div class="descripcion-content">
+                            <p id="modalDescripcion">-</p>
+                        </div>
+                        
+                        <div id="modalArchivo" class="archivo-section">
+                            <!-- Información del archivo se insertará aquí -->
+                        </div>
+
+                        <div id="modalAtender" class="atender-section" style="margin-top: 20px;">
+                            <button class="btn btn-primary" id="btnAtender" onclick="atenderTicket()">
+                                <i class="fas fa-headset"></i>
+                                Atender Ticket
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal()">
+                    <i class="fas fa-times"></i>
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para atender ticket -->
+    <div id="atenderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #28a745;">
+                <h2>
+                    <i class="fas fa-headset"></i>
+                    Atender Ticket <span id="ticketIdAtender">#000</span>
+                </h2>
+                <span class="close" onclick="cerrarModalAtender()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="atender-info">
+                    <h4 id="tituloTicketAtender">Título del ticket</h4>
+                </div>
+                
+                <div class="atender-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="usuarioSelect">Asignar a Usuario:</label>
+                            <select id="usuarioSelect" class="form-control">
+                                <option value="">Sin asignar</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="prioridadSelect">Prioridad:</label>
+                            <select id="prioridadSelect" class="form-control">
+                                <option value="Low">Baja</option>
+                                <option value="Medium">Media</option>
+                                <option value="High">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="estadoSelect">Estado:</label>
+                            <select id="estadoSelect" class="form-control">
+                                <option value="Open">Abierto</option>
+                                <option value="In Progress">En Progreso</option>
+                                <option value="Closed">Cerrado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="comentarioTicket">Comentario de Atención:</label>
+                        <textarea id="comentarioTicket" class="form-control" rows="4" 
+                                  placeholder="Describe las acciones tomadas para resolver el ticket..."></textarea>
+                        <small class="form-text text-muted">Este comentario se guardará en el historial del ticket</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalAtender()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button class="btn btn-success" onclick="guardarCambiosTicket()">
+                    <i class="fas fa-save"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cargar el componente sidebar primero -->
+    <script src="assets/js/auth-utils.js"></script>
     <script src="assets/js/sidebar-component.js"></script>
     <script src="assets/js/dashboard.js"></script>
     
     <script>
-        // Inicializar el sidebar al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            window.sidebarInstance = initSidebar('dashboard');
-        });
+        // La inicialización ahora se maneja automáticamente en dashboard.js
     </script>
 </body>
 </html>

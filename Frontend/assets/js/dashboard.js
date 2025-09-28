@@ -1,240 +1,67 @@
 // --- LÓGICA PRINCIPAL AL CARGAR LA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Verificar si el usuario está autenticado
-  const usuarioInfo = localStorage.getItem('usuario');
-  let token = localStorage.getItem('token');
+  // Inicializar autenticación y UI
+  const usuario = inicializarAuth('dashboard');
   
-  console.log('=== DEBUG DASHBOARD.JS ===');
-  console.log('Usuario en localStorage:', usuarioInfo);
-  console.log('Token en localStorage:', token);
-  console.log('Todas las claves:', Object.keys(localStorage));
-  console.log('localStorage completo:', { ...localStorage });
-  
-  if (!usuarioInfo) {
-    console.log('No hay usuario en localStorage, redirigiendo...');
-    window.location.href = 'auth.html';
-    return;
+  if (usuario) {
+    // 2. Inicializar eventos específicos del dashboard
+    cargarTickets();
+    cargarEstadisticas();
+    inicializarModal();
+    
+    // 3. Verificar si hay un ticket para atender
+    verificarTicketParaAtender();
   }
-
-  const usuario = JSON.parse(usuarioInfo);
-  
-  // Si no hay token, crear uno temporal
-  if (!token) {
-    token = `temp_${Date.now()}`;
-    localStorage.setItem('token', token);
-  }
-  
-  // Mostrar información del usuario en el dashboard
-  const userInfoElement = document.getElementById('user-info');
-  if (userInfoElement) {
-    userInfoElement.textContent = `👤 ${usuario.username || usuario.nombre}`;
-  }
-  
-  // Actualizar sidebar con info del usuario
-  setTimeout(() => {
-    const usuarioElement = document.getElementById('usuarioActual');
-    if (usuarioElement && !usuarioElement.innerHTML) {
-      usuarioElement.innerHTML = `
-        <div class="user-avatar">
-          <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="user-details">
-          <div class="user-name">${usuario.username || usuario.nombre}</div>
-          <div class="user-role">${usuario.rol || 'Usuario'}</div>
-        </div>
-      `;
-    }
-  }, 100);
-  
-  // 2. Inicializar eventos y cargar datos
-  inicializarEventos();
-  cargarTickets();
-  cargarEstadisticas();
-  
-  // DEBUG: Función global para verificar localStorage
-  window.debugStorage = function() {
-    console.log('=== DEBUG STORAGE ===');
-    console.log('usuario:', localStorage.getItem('usuario'));
-    console.log('token:', localStorage.getItem('token'));
-    console.log('Todas las claves:', Object.keys(localStorage));
-    for (let key of Object.keys(localStorage)) {
-      console.log(`${key}:`, localStorage.getItem(key));
-    }
-  };
 });
 
-// --- INICIALIZACIÓN DE EVENTOS ---
-function inicializarEventos() {
-  const ticketForm = document.getElementById('ticketForm');
-  const fileInput = document.getElementById('archivo');
-  const fileName = document.getElementById('file-name');
-
-  if (ticketForm) {
-    ticketForm.addEventListener('submit', manejarEnvioTicket);
-  }
-
-  if (fileInput && fileName) {
-    fileInput.addEventListener('change', function() {
-      fileName.textContent = this.files.length > 0 ? this.files[0].name : '';
-    });
-  }
-}
-
-// --- MANEJO DEL FORMULARIO DE TICKETS ---
-async function manejarEnvioTicket(e) {
-  e.preventDefault();
-
-  const usuario = JSON.parse(localStorage.getItem('usuario'));
-  let token = localStorage.getItem('token');
-
-  if (!usuario) {
-    alert('Sesión expirada. Por favor, inicia sesión nuevamente.');
-    window.location.href = 'auth.html';
-    return;
-  }
-
-  // Obtener datos del formulario
-  const titulo = document.getElementById('titulo').value.trim();
-  const descripcion = document.getElementById('descripcion').value.trim();
-  const categoria = document.getElementById('categoria').value;
-  const archivoInput = document.getElementById('archivo');
-
-  // Validar campos obligatorios
-  if (!titulo || !descripcion || !categoria) {
-    alert('Por favor, completa todos los campos obligatorios.');
-    return;
-  }
-
-  // Validar tamaño del archivo si existe
-  if (archivoInput.files.length > 0) {
-    const archivo = archivoInput.files[0];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    
-    if (archivo.size > maxSize) {
-      alert('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
-      return;
-    }
-    
-    // Validar tipo de archivo
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
-                         'application/pdf', 'text/plain', 
-                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                         'application/msword'];
-    
-    if (!allowedTypes.includes(archivo.type)) {
-      alert('Tipo de archivo no permitido. Solo se permiten: JPG, PNG, GIF, PDF, TXT, DOCX, DOC');
-      return;
-    }
-  }
-
-  // Crear FormData para enviar archivos
-  const formData = new FormData();
-  formData.append('Title', titulo);
-  formData.append('Description', descripcion);
-  formData.append('categoria', categoria);
-  formData.append('AssignedTo', usuario.id || usuario._id || usuario.username);
-  formData.append('usuario_nombre', usuario.username || usuario.nombre);
-  
-  // Agregar archivo si existe
-  if (archivoInput.files.length > 0) {
-    formData.append('archivo', archivoInput.files[0]);
-  }
-
-  try {
-    // Intentar crear ticket en backend
-    const response = await fetch('http://localhost:3000/tickets', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-        // No agregar Content-Type cuando usamos FormData
-      },
-      body: formData
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('Ticket creado en backend:', result);
-      
-      // Limpiar formulario
-      document.getElementById('ticketForm').reset();
-      document.getElementById('file-name').textContent = '';
-      
-      alert('Ticket creado exitosamente');
-      cargarTickets(); // Recargar lista
-      
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `Error del servidor: ${response.status}`);
-    }
-    
-  } catch (error) {
-    console.error('Error de conexión:', error);
-    alert(`Error al crear el ticket: ${error.message}`);
-    
-    // Como respaldo, guardar localmente (sin archivo)
-    const ticketData = {
-      Title: titulo,
-      Description: descripcion,
-      categoria: categoria,
-      AssignedTo: usuario.id || usuario._id || usuario.username,
-      usuario_nombre: usuario.username || usuario.nombre
-    };
-    
-    guardarTicketLocalmente(ticketData);
-    
-    // Limpiar formulario
-    document.getElementById('ticketForm').reset();
-    document.getElementById('file-name').textContent = '';
-    
-    alert('Ticket guardado localmente (sin archivo adjunto)');
-    cargarTickets();
-  }
-}
-
-// --- FUNCIONES AUXILIARES ---
-function guardarTicketLocalmente(ticketData) {
-  let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
-  
-  const nuevoTicket = {
-    ...ticketData,
-    Number: Date.now(), // ID único temporal
-    Status: 'Open',
-    CreatedAt: new Date().toISOString(),
-    local: true // Marca para identificar tickets locales
-  };
-  
-  tickets.push(nuevoTicket);
-  localStorage.setItem('tickets', JSON.stringify(tickets));
-}
+// --- CARGA Y MANEJO DE TICKETS ---
 
 async function cargarTickets() {
   try {
+    console.log('Intentando cargar tickets desde backend...');
     // Intentar cargar desde backend
     const response = await fetch('http://localhost:3000/tickets');
     
     if (response.ok) {
       const tickets = await response.json();
-      console.log('Tickets cargados desde backend:', tickets);
+      console.log('✅ Tickets cargados desde backend:', tickets.length, 'tickets encontrados');
+      console.log('Primeros tickets:', tickets.slice(0, 3));
+      
       mostrarTickets(tickets);
       actualizarEstadisticas(tickets);
+      
+      // Limpiar tickets locales si hay tickets del servidor
+      if (tickets.length > 0) {
+        const ticketsLocales = JSON.parse(localStorage.getItem('tickets')) || [];
+        const ticketsLocalesReales = ticketsLocales.filter(t => !t.local);
+        if (ticketsLocalesReales.length === 0 && ticketsLocales.length > 0) {
+          console.log('Limpiando tickets de ejemplo locales...');
+          localStorage.removeItem('tickets');
+        }
+      }
+      
       return;
+    } else {
+      console.error('Error en respuesta del servidor:', response.status, response.statusText);
     }
     
   } catch (error) {
-    console.error('Error al conectar con backend:', error);
+    console.error('❌ Error al conectar con backend:', error);
   }
   
   // Si no hay conexión, usar datos locales
-  console.log('Usando datos locales...');
+  console.log('📁 Usando datos locales...');
   const ticketsLocales = JSON.parse(localStorage.getItem('tickets')) || [];
   
   // Si no hay tickets locales, crear ejemplos
   if (ticketsLocales.length === 0) {
+    console.log('Creando tickets de ejemplo...');
     const ticketsEjemplo = crearTicketsEjemplo();
     localStorage.setItem('tickets', JSON.stringify(ticketsEjemplo));
     mostrarTickets(ticketsEjemplo);
     actualizarEstadisticas(ticketsEjemplo);
   } else {
+    console.log('Mostrando', ticketsLocales.length, 'tickets locales');
     mostrarTickets(ticketsLocales);
     actualizarEstadisticas(ticketsLocales);
   }
@@ -276,6 +103,10 @@ function mostrarTickets(tickets) {
         <div class="ticket-details">
           <span class="badge badge-${prioridad}">${prioridad}</span>
           <span class="ticket-status status-${estado}">${estado}</span>
+          <button class="btn btn-sm" onclick="abrirModalTicket(${JSON.stringify(ticket).replace(/"/g, '&quot;')})">
+            <i class="fas fa-eye"></i>
+            Ver
+          </button>
         </div>
       </div>
     `;
@@ -294,44 +125,10 @@ function actualizarEstadisticas(tickets) {
   document.getElementById('alta-prioridad').textContent = altaPrioridad;
 }
 
-function crearTicketsEjemplo() {
-  return [
-    {
-      Number: 1,
-      Title: "Problema con login",
-      Description: "No puedo acceder a mi cuenta desde ayer",
-      Status: "Open",
-      Priority: "Medium", // Prioridad asignada por defecto
-      CreatedAt: new Date().toISOString(),
-      usuario_nombre: "Usuario Demo",
-      categoria: "tecnico"
-    },
-    {
-      Number: 2,
-      Title: "Consulta sobre facturación",
-      Description: "Necesito información sobre mi última factura",
-      Status: "In Progress",
-      Priority: "Medium", // Prioridad asignada por defecto
-      CreatedAt: new Date(Date.now() - 86400000).toISOString(),
-      usuario_nombre: "Usuario Demo",
-      categoria: "consulta"
-    },
-    {
-      Number: 3,
-      Title: "Solicitud de información",
-      Description: "Quiero saber más sobre los nuevos productos",
-      Status: "Closed",
-      Priority: "Medium", // Prioridad asignada por defecto
-      CreatedAt: new Date(Date.now() - 172800000).toISOString(),
-      usuario_nombre: "Usuario Demo",
-      categoria: "solicitud"
-    }
-  ];
-}
-
 function cargarEstadisticas() {
   // Esta función se ejecuta después de cargarTickets()
   // Las estadísticas se actualizan automáticamente
+  actualizarEstadisticas(JSON.parse(localStorage.getItem('tickets')) || []);
 }
 
 function cerrarSesion() {
@@ -339,5 +136,382 @@ function cerrarSesion() {
     localStorage.removeItem('usuario');
     localStorage.removeItem('token');
     window.location.href = 'auth.html';
+  }
+}
+
+// --- FUNCIONES DEL MODAL ---
+function inicializarModal() {
+  // Cerrar modal al hacer clic fuera de él
+  window.onclick = function(event) {
+    const modal = document.getElementById('ticketModal');
+    if (event.target == modal) {
+      cerrarModal();
+    }
+  }
+  
+  // Cerrar modal con tecla Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      cerrarModal();
+    }
+  });
+}
+
+function abrirModalTicket(ticket) {
+  const modal = document.getElementById('ticketModal');
+  const fecha = new Date(ticket.CreatedAt || ticket.fecha_creacion).toLocaleString('es-ES');
+  const estado = ticket.Status || ticket.estado || 'Open';
+  const prioridad = ticket.Priority || ticket.prioridad || 'Medium';
+  
+  // Información del archivo
+  let archivoInfo = '';
+  if (ticket.archivo_path || ticket.archivo_nombre_original || ticket.archivo_nombre) {
+    const nombreArchivo = ticket.archivo_nombre_original || ticket.archivo_nombre || 'Archivo adjunto';
+    
+    // Construir URL de descarga usando el backend
+    let downloadUrl = '';
+    if (ticket.archivo_path) {
+      // Extraer solo el nombre del archivo de la ruta completa
+      const fileName = ticket.archivo_path.split('/').pop() || ticket.archivo_path.split('\\').pop();
+      downloadUrl = `http://localhost:3000/uploads/${fileName}`;
+    }
+    
+    archivoInfo = `
+      <div class="archivo-info">
+        <i class="fas fa-paperclip"></i>
+        <span>${nombreArchivo}</span>
+        ${downloadUrl ? `
+          <button onclick="descargarArchivo('${downloadUrl}', '${nombreArchivo}')" class="btn btn-sm btn-secondary">
+            <i class="fas fa-download"></i> Descargar
+          </button>
+        ` : ''}
+      </div>
+    `;
+  }
+  
+  document.getElementById('modalTicketId').textContent = `#${ticket.Number || ticket.id}`;
+  document.getElementById('modalTitulo').textContent = ticket.Title || ticket.titulo;
+  document.getElementById('modalDescripcion').textContent = ticket.Description || ticket.descripcion;
+  document.getElementById('modalUsuario').textContent = ticket.usuario_nombre || 'Usuario';
+  document.getElementById('modalFecha').textContent = fecha;
+  document.getElementById('modalEstado').innerHTML = `<span class="ticket-status status-${estado.toLowerCase()}">${estado}</span>`;
+  document.getElementById('modalPrioridad').innerHTML = `<span class="badge badge-${prioridad.toLowerCase()}">${prioridad}</span>`;
+  document.getElementById('modalCategoria').textContent = ticket.categoria || 'Sin categoría';
+  document.getElementById('modalArchivo').innerHTML = archivoInfo;
+  
+  // Configurar botón de atender con el ticket current
+  document.getElementById('btnAtender').onclick = () => abrirModalAtender(ticket);
+  
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden'; // Prevenir scroll en el fondo
+}
+
+// --- FUNCIONES DEL MODAL DE ATENCIÓN ---
+async function abrirModalAtender(ticket) {
+  const modalAtender = document.getElementById('atenderModal');
+  
+  // Cargar datos actuales del ticket
+  document.getElementById('ticketIdAtender').textContent = `#${ticket.Number || ticket.id}`;
+  document.getElementById('tituloTicketAtender').textContent = ticket.Title || ticket.titulo;
+  
+  // Configurar valores actuales (usando los valores exactos del schema)
+  document.getElementById('prioridadSelect').value = ticket.Priority || 'Medium';
+  document.getElementById('estadoSelect').value = ticket.Status || 'Open';
+  document.getElementById('comentarioTicket').value = '';
+  
+  // Cargar usuarios disponibles
+  await cargarUsuariosDisponibles();
+  
+  // Seleccionar usuario asignado actual si existe
+  const usuarioAsignado = ticket.AssignedTo || ticket.assigned_to;
+  if (usuarioAsignado) {
+    document.getElementById('usuarioSelect').value = usuarioAsignado;
+  }
+  
+  // Guardar referencia del ticket actual
+  window.ticketActual = ticket;
+  
+  modalAtender.style.display = 'block';
+}
+
+async function cargarUsuariosDisponibles() {
+  const select = document.getElementById('usuarioSelect');
+  
+  try {
+    // Intentar cargar usuarios desde backend
+    const response = await fetch('http://localhost:3000/users');
+    
+    if (response.ok) {
+      const usuarios = await response.json();
+      console.log('Usuarios cargados:', usuarios);
+      
+      select.innerHTML = '<option value="">Sin asignar</option>';
+      usuarios.forEach(usuario => {
+        select.innerHTML += `
+          <option value="${usuario._id || usuario.id}">
+            ${usuario.username || usuario.nombre} (${usuario.rol || 'Usuario'})
+          </option>
+        `;
+      });
+    } else {
+      throw new Error('No se pudieron cargar los usuarios');
+    }
+    
+  } catch (error) {
+    console.error('Error al cargar usuarios:', error);
+    
+    // Opciones por defecto si no hay conexión
+    select.innerHTML = `
+      <option value="">Sin asignar</option>
+      <option value="admin">Administrador</option>
+      <option value="soporte">Soporte Técnico</option>
+    `;
+  }
+}
+
+async function guardarCambiosTicket() {
+  const ticket = window.ticketActual;
+  if (!ticket) {
+    alert('Error: No hay ticket seleccionado');
+    return;
+  }
+  
+  // Obtener información del usuario actual
+  const usuarioActual = JSON.parse(localStorage.getItem('usuario'));
+  
+  const datosActualizados = {
+    Priority: document.getElementById('prioridadSelect').value,
+    Status: document.getElementById('estadoSelect').value,
+    AssignedTo: document.getElementById('usuarioSelect').value || null,
+    comentario: document.getElementById('comentarioTicket').value.trim(),
+    usuario_comentario: usuarioActual?.username || 'Usuario desconocido',
+    usuario_id: usuarioActual?.id || null
+  };
+  
+  console.log('=== DEBUG ACTUALIZACIÓN TICKET ===');
+  console.log('Ticket actual:', ticket);
+  console.log('Número del ticket:', ticket.Number || ticket.id);
+  console.log('Datos de actualización:', datosActualizados);
+  
+  try {
+    const ticketId = ticket.Number || ticket.id;
+    const url = `http://localhost:3000/tickets/${ticketId}`;
+    
+    console.log('URL de actualización:', url);
+    
+    // Intentar actualizar en backend
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(datosActualizados)
+    });
+    
+    console.log('Status de respuesta:', response.status);
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Respuesta del servidor:', result);
+      
+      alert('Ticket actualizado exitosamente');
+      cerrarModalAtender();
+      cerrarModal();
+      cargarTickets();
+      
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Error del servidor:', errorData);
+      
+      // Si es 404, mostrar información adicional
+      if (response.status === 404) {
+        let mensajeError = `Ticket #${ticketId} no encontrado en el servidor.`;
+        if (errorData.ticketsDisponibles) {
+          mensajeError += '\n\nTickets disponibles:';
+          errorData.ticketsDisponibles.forEach(t => {
+            mensajeError += `\n- #${t.number}: ${t.title}`;
+          });
+        }
+        throw new Error(mensajeError);
+      }
+      
+      throw new Error(errorData.message || `Error del servidor: ${response.status}`);
+    }
+    
+  } catch (error) {
+    console.error('Error al actualizar ticket:', error);
+    
+    // Mostrar error más específico
+    if (error.message.includes('Failed to fetch')) {
+      alert('No se puede conectar al servidor. Verifique su conexión.');
+    } else if (error.message.includes('no encontrado')) {
+      alert(`${error.message}\n\nEsto puede ocurrir si el ticket es de ejemplo local y no existe en la base de datos del servidor.`);
+    } else {
+      alert(`Error al actualizar el ticket: ${error.message}`);
+    }
+    
+    // Solo actualizar localmente si no es un error 404
+    if (!error.message.includes('no encontrado')) {
+      actualizarTicketLocal(datosActualizados);
+      alert('Ticket actualizado localmente como respaldo');
+    }
+    
+    cerrarModalAtender();
+    cerrarModal();
+    cargarTickets();
+  }
+}
+
+function actualizarTicketLocal(datosActualizados) {
+  const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+  const ticket = window.ticketActual;
+  
+  const indice = tickets.findIndex(t => 
+    (t.Number || t.id).toString() === (ticket.Number || ticket.id).toString()
+  );
+  
+  if (indice !== -1) {
+    // Actualizar propiedades
+    if (datosActualizados.Priority) {
+      tickets[indice].Priority = datosActualizados.Priority;
+      tickets[indice].prioridad = datosActualizados.Priority; // Compatibilidad
+    }
+    
+    if (datosActualizados.Status) {
+      tickets[indice].Status = datosActualizados.Status;
+      tickets[indice].estado = datosActualizados.Status; // Compatibilidad
+    }
+    
+    if (datosActualizados.AssignedTo !== undefined) {
+      tickets[indice].AssignedTo = datosActualizados.AssignedTo;
+      tickets[indice].assigned_to = datosActualizados.AssignedTo; // Compatibilidad
+    }
+    
+    // Agregar comentario si existe
+    if (datosActualizados.comentario) {
+      if (!tickets[indice].comentarios) {
+        tickets[indice].comentarios = [];
+      }
+      tickets[indice].comentarios.push({
+        texto: datosActualizados.comentario,
+        fecha: new Date().toISOString(),
+        usuario: datosActualizados.usuario_comentario || 'Usuario',
+        usuario_id: datosActualizados.usuario_id
+      });
+    }
+    
+    // Actualizar fecha de modificación
+    tickets[indice].UpdatedAt = new Date().toISOString();
+    
+    localStorage.setItem('tickets', JSON.stringify(tickets));
+    console.log('Ticket actualizado localmente:', tickets[indice]);
+  }
+}
+
+function cerrarModalAtender() {
+  const modalAtender = document.getElementById('atenderModal');
+  modalAtender.style.display = 'none';
+  window.ticketActual = null;
+}
+
+function cerrarModal() {
+  const modal = document.getElementById('ticketModal');
+  modal.style.display = 'none';
+  document.body.style.overflow = 'auto'; // Restaurar scroll
+}
+
+// Función para manejar la descarga de archivos
+async function descargarArchivo(url, nombreArchivo) {
+  try {
+    console.log('Intentando descargar:', url);
+    
+    // Primero verificar si el backend está disponible
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    
+    // Crear un blob con el contenido del archivo
+    const blob = await response.blob();
+    
+    // Crear un enlace temporal para la descarga
+    const link = document.createElement('a');
+    const objectUrl = URL.createObjectURL(blob);
+    
+    link.href = objectUrl;
+    link.download = nombreArchivo;
+    link.style.display = 'none';
+    
+    // Agregar al DOM, hacer clic y remover
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpiar la URL del objeto
+    URL.revokeObjectURL(objectUrl);
+    
+  } catch (error) {
+    console.error('Error al descargar archivo:', error);
+    
+    // Si falla la descarga desde el backend, mostrar mensaje informativo
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      alert('El servidor no está disponible. No se puede descargar el archivo en este momento.');
+    } else if (error.message.includes('404')) {
+      alert('El archivo no se encontró en el servidor. Puede haber sido movido o eliminado.');
+    } else {
+      alert(`Error al descargar el archivo: ${error.message}`);
+    }
+  }
+}
+
+// --- FUNCIONES DE EJEMPLO (PARA DESARROLLO) ---
+function crearTicketsEjemplo() {
+  const ejemplo = [];
+  for (let i = 1; i <= 10; i++) {
+    ejemplo.push({
+      id: i,
+      Number: i, // Usar números simples en lugar de strings
+      Title: `Ticket de ejemplo ${i}`,
+      Description: 'Este es un ticket de ejemplo para propósitos de demostración. Los tickets de ejemplo no existen en el servidor.',
+      Status: i % 2 === 0 ? 'Closed' : 'Open',
+      Priority: i % 3 === 0 ? 'High' : 'Medium',
+      CreatedAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+      usuario_nombre: `Usuario ${i}`,
+      categoria: i % 2 === 0 ? 'Soporte' : 'Ventas',
+      archivo_nombre: i % 5 === 0 ? 'informe.pdf' : null,
+      archivo_path: i % 5 === 0 ? '/uploads/informe.pdf' : null,
+      local: true // Marcar como ticket local de ejemplo
+    });
+  }
+  return ejemplo;
+}
+
+// --- FUNCIONES AUXILIARES ---
+function verificarTicketParaAtender() {
+  const ticketParaAtender = localStorage.getItem('ticketParaAtender');
+  
+  if (ticketParaAtender) {
+    try {
+      const ticket = JSON.parse(ticketParaAtender);
+      console.log('Ticket para atender encontrado:', ticket);
+      
+      // Limpiar localStorage
+      localStorage.removeItem('ticketParaAtender');
+      
+      // Abrir modal después de un breve delay para asegurar que todo esté cargado
+      setTimeout(() => {
+        abrirModalTicket(ticket);
+        // Abrir directamente el modal de atención
+        setTimeout(() => {
+          abrirModalAtender(ticket);
+        }, 500);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error al procesar ticket para atender:', error);
+      localStorage.removeItem('ticketParaAtender');
+    }
   }
 }

@@ -25,13 +25,13 @@ class SidebarComponent {
             </a>
           </li>
           <li class="${this.activeMenuItem === 'tickets' ? 'active' : ''}">
-            <a href="tickets.html">
+            <a href="list-ticket.html">
               <i class="fas fa-ticket-alt"></i>
               <span>Mis Tickets</span>
             </a>
           </li>
           <li class="${this.activeMenuItem === 'nuevo' ? 'active' : ''}">
-            <a href="#nuevo">
+            <a href="send_ticket.html">
               <i class="fas fa-plus-circle"></i>
               <span>Nuevo Ticket</span>
             </a>

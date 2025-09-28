@@ -10,8 +10,13 @@ const cors = require("cors");
 const multer = require("multer"); // Para manejo de archivos
 const path = require("path");
 const fs = require("fs");
-const { registrarUsuario, iniciarSesion } = require("./server/user");
-const { createTicket, getAllTickets, createTicketController } = require("./server/tickets"); // Agregar createTicketController
+const { registrarUsuario, iniciarSesion, obtenerUsuarios } = require("./server/user");
+const { 
+  getAllTickets, 
+  createTicketController, 
+  updateTicketController,
+  getTicketsByAssignedUserController
+} = require("./server/tickets");
 
 const app = express();
 
@@ -121,6 +126,16 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.get("/users", async (req, res) => {
+  try {
+    const usuarios = await obtenerUsuarios();
+    res.status(200).json(usuarios);
+  } catch (err) {
+    res.status(500).json({ message: "Error al obtener usuarios", error: err });
+  }
+});
+
+
 // 📌 Ruta para crear un nuevo ticket con archivo (POST /tickets)
 app.post("/tickets", upload.single('archivo'), createTicketController);
 
@@ -135,6 +150,9 @@ app.get("/tickets", async (req, res) => {
     res.status(500).json({ message: "Error al obtener tickets", error: err.message });
   }
 });
+
+// 📌 Ruta para obtener tickets asignados a un usuario específico (GET /tickets/assigned/:userId)
+app.get("/tickets/assigned/:userId", getTicketsByAssignedUserController);
 
 // 📌 Ruta para descargar archivos con nombre original
 app.get("/tickets/:ticketId/archivo", async (req, res) => {
@@ -159,6 +177,47 @@ app.get("/tickets/:ticketId/archivo", async (req, res) => {
   } catch (err) {
     console.error('Error al descargar archivo:', err);
     res.status(500).json({ message: "Error al descargar archivo" });
+  }
+});
+
+// 📌 Ruta para actualizar ticket completo (PUT /tickets/:id)
+app.put("/tickets/:id", updateTicketController);
+
+// 📌 Ruta de debug para listar tickets disponibles (GET /tickets/debug/list)
+app.get("/tickets/debug/list", async (req, res) => {
+  try {
+    const tickets = await getAllTickets();
+    const ticketList = tickets.map(ticket => ({
+      Number: ticket.Number,
+      Title: ticket.Title,
+      Status: ticket.Status,
+      Priority: ticket.Priority,
+      CreatedAt: ticket.CreatedAt,
+      usuario_nombre: ticket.usuario_nombre
+    }));
+    
+    res.status(200).json({
+      message: `Se encontraron ${tickets.length} tickets en la base de datos`,
+      tickets: ticketList
+    });
+  } catch (err) {
+    console.error('Error al obtener lista de tickets:', err);
+    res.status(500).json({ message: "Error al obtener lista de tickets", error: err.message });
+  }
+});
+
+// 📌 Ruta de debug para limpiar tickets (DELETE /tickets/debug/clear) - SOLO PARA DESARROLLO
+app.delete("/tickets/debug/clear", async (req, res) => {
+  try {
+    const { Ticket } = require("./server/tickets");
+    await Ticket.deleteMany({});
+    
+    res.status(200).json({
+      message: "Todos los tickets han sido eliminados de la base de datos"
+    });
+  } catch (err) {
+    console.error('Error al limpiar tickets:', err);
+    res.status(500).json({ message: "Error al limpiar tickets", error: err.message });
   }
 });
 
