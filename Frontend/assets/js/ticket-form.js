@@ -78,8 +78,8 @@ async function manejarEnvioTicket(e) {
   }
 
   try {
-    // Intentar crear ticket en backend
-    const response = await fetch('http://localhost:3000/tickets', {
+    // Intentar crear ticket en backend (usa ruta relativa para el proxy de Vite)
+    const response = await fetch('/tickets', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`

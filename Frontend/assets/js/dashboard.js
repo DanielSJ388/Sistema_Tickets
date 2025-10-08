@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
 async function cargarTickets() {
   try {
     console.log('Intentando cargar tickets desde backend...');
-    // Intentar cargar desde backend
-    const response = await fetch('http://localhost:3000/tickets');
+    // Intentar cargar desde backend (usa ruta relativa para el proxy de Vite)
+    const response = await fetch('/tickets');
     
     if (response.ok) {
       const tickets = await response.json();
@@ -173,7 +173,7 @@ function abrirModalTicket(ticket) {
     if (ticket.archivo_path) {
       // Extraer solo el nombre del archivo de la ruta completa
       const fileName = ticket.archivo_path.split('/').pop() || ticket.archivo_path.split('\\').pop();
-      downloadUrl = `http://localhost:3000/uploads/${fileName}`;
+      downloadUrl = `/uploads/${fileName}`;
     }
     
     archivoInfo = `
@@ -238,8 +238,8 @@ async function cargarUsuariosDisponibles() {
   const select = document.getElementById('usuarioSelect');
   
   try {
-    // Intentar cargar usuarios desde backend
-    const response = await fetch('http://localhost:3000/users');
+    // Intentar cargar usuarios desde backend (usa ruta relativa para el proxy de Vite)
+    const response = await fetch('/users');
     
     if (response.ok) {
       const usuarios = await response.json();
@@ -295,11 +295,11 @@ async function guardarCambiosTicket() {
   
   try {
     const ticketId = ticket.Number || ticket.id;
-    const url = `http://localhost:3000/tickets/${ticketId}`;
+    const url = `/tickets/${ticketId}`;
     
     console.log('URL de actualización:', url);
     
-    // Intentar actualizar en backend
+    // Intentar actualizar en backend (usa ruta relativa para el proxy de Vite)
     const response = await fetch(url, {
       method: 'PUT',
       headers: {

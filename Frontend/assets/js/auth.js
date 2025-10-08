@@ -90,7 +90,7 @@ async function registrar() {
   limpiarMensaje();
 
   try {
-    const respuesta = await fetch("http://localhost:3000/register", {
+    const respuesta = await fetch("/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password })
@@ -137,7 +137,7 @@ async function iniciarSesion() {
     console.log('=== INICIANDO LOGIN ===');
     console.log('Enviando datos:', { identifier, password: '***' });
     
-    const respuesta = await fetch("http://localhost:3000/login", {
+    const respuesta = await fetch("/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ identifier, password })

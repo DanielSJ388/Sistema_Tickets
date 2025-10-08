@@ -25,7 +25,7 @@ async function cargarTicketsAsignados(usuario) {
       throw new Error('No se encontró ID del usuario');
     }
     
-    const url = `http://localhost:3000/tickets/assigned/${userId}`;
+    const url = `/tickets/assigned/${userId}`;
     console.log('URL de la petición:', url);
     
     const response = await fetch(url);
@@ -47,7 +47,7 @@ async function cargarTicketsAsignados(usuario) {
         console.log('Endpoint no encontrado, verificando conectividad...');
         // Verificar si el servidor está funcionando
         try {
-          const testResponse = await fetch('http://localhost:3000/tickets');
+          const testResponse = await fetch('/tickets');
           if (testResponse.ok) {
             mostrarError('El endpoint para tickets asignados no está disponible. Contacta al administrador.');
           } else {
@@ -197,7 +197,7 @@ function mostrarArchivoEnDetalle(ticket) {
     let downloadUrl = '';
     if (ticket.archivo_path) {
       const fileName = ticket.archivo_path.split('/').pop() || ticket.archivo_path.split('\\').pop();
-      downloadUrl = `http://localhost:3000/uploads/${fileName}`;
+      downloadUrl = `/uploads/${fileName}`;
     }
     
     archivoContainer.innerHTML = `
