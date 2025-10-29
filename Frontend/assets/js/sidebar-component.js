@@ -49,7 +49,7 @@ class SidebarComponent {
             </a>
           </li>
           <li class="${this.activeMenuItem === 'configuracion' ? 'active' : ''}">
-            <a href="#configuracion">
+            <a href="configuracion.html">
               <i class="fas fa-cog"></i>
               <span>Configuración</span>
             </a>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - SistemaTickets</title>
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="page-container">
+        <main class="main-content">
+            <div class="main-header">
+                <h2>Configuración</h2>
+                <p>Gestiona tu perfil y preferencias del sistema</p>
+            </div>
+
+            <!-- Tarjetas de configuración -->
+            <div class="config-grid">
+                <!-- Perfil de Usuario -->
+                <div class="card config-card">
+                    <div class="config-header">
+                        <div class="config-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div>
+                            <h3>Perfil de Usuario</h3>
+                            <p>Información de tu cuenta</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="info-group">
+                            <label>Nombre de Usuario</label>
+                            <div class="info-value" id="configUsername">-</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <label>Correo Electrónico</label>
+                            <div class="info-value" id="configEmail">-</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <label>Rol</label>
+                            <div class="info-value">
+                                <span class="role-badge" id="configRole">Usuario</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <label>Miembro desde</label>
+                            <div class="info-value" id="configMemberSince">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-actions">
+                        <button class="btn btn-primary" onclick="abrirModalCambiarPassword()">
+                            <i class="fas fa-key"></i>
+                            Cambiar Contraseña
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Personales -->
+                <div class="card config-card">
+                    <div class="config-header">
+                        <div class="config-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h3>Mis Estadísticas</h3>
+                            <p>Resumen de tu actividad</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="stat-item">
+                            <i class="fas fa-ticket-alt stat-icon"></i>
+                            <div>
+                                <div class="stat-value" id="statTicketsCreados">0</div>
+                                <div class="stat-label">Tickets Creados</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <i class="fas fa-clipboard-check stat-icon"></i>
+                            <div>
+                                <div class="stat-value" id="statTicketsAsignados">0</div>
+                                <div class="stat-label">Tickets Asignados</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <i class="fas fa-check-circle stat-icon"></i>
+                            <div>
+                                <div class="stat-value" id="statTicketsResueltos">0</div>
+                                <div class="stat-label">Tickets Resueltos</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <i class="fas fa-comments stat-icon"></i>
+                            <div>
+                                <div class="stat-value" id="statComentarios">0</div>
+                                <div class="stat-label">Comentarios</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferencias de Notificaciones -->
+                <div class="card config-card">
+                    <div class="config-header">
+                        <div class="config-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div>
+                            <h3>Notificaciones</h3>
+                            <p>Configura tus alertas</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="toggle-item">
+                            <div class="toggle-info">
+                                <i class="fas fa-envelope"></i>
+                                <div>
+                                    <strong>Notificaciones por Email</strong>
+                                    <p>Recibe alertas en tu correo</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="notifEmail" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <div class="toggle-info">
+                                <i class="fas fa-desktop"></i>
+                                <div>
+                                    <strong>Notificaciones del Navegador</strong>
+                                    <p>Alertas en el escritorio</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="notifBrowser">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <div class="toggle-info">
+                                <i class="fas fa-volume-up"></i>
+                                <div>
+                                    <strong>Sonidos</strong>
+                                    <p>Reproducir sonido en alertas</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="notifSound" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="config-actions">
+                        <button class="btn btn-success" onclick="guardarPreferencias()">
+                            <i class="fas fa-save"></i>
+                            Guardar Preferencias
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Apariencia -->
+                <div class="card config-card">
+                    <div class="config-header">
+                        <div class="config-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <div>
+                            <h3>Apariencia</h3>
+                            <p>Personaliza la interfaz</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="theme-selector">
+                            <label>Tema del Sistema</label>
+                            <div class="theme-options">
+                                <div class="theme-option active" data-theme="light">
+                                    <i class="fas fa-sun"></i>
+                                    <span>Claro</span>
+                                </div>
+                                <div class="theme-option" data-theme="dark">
+                                    <i class="fas fa-moon"></i>
+                                    <span>Oscuro</span>
+                                </div>
+                                <div class="theme-option" data-theme="auto">
+                                    <i class="fas fa-adjust"></i>
+                                    <span>Auto</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <label>Tamaño de Fuente</label>
+                            <select id="fontSize" class="config-select">
+                                <option value="small">Pequeño</option>
+                                <option value="medium" selected>Mediano</option>
+                                <option value="large">Grande</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Sistema -->
+                <div class="card config-card">
+                    <div class="config-header">
+                        <div class="config-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div>
+                            <h3>Acerca del Sistema</h3>
+                            <p>Información y ayuda</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="info-group">
+                            <label>Versión del Sistema</label>
+                            <div class="info-value">1.0.0</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <label>Última Actualización</label>
+                            <div class="info-value">Diciembre 2024</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <label>Soporte</label>
+                            <div class="info-value">
+                                <a href="mailto:soporte@sistematickets.com">soporte@sistematickets.com</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-actions">
+                        <button class="btn btn-secondary" onclick="verDocumentacion()">
+                            <i class="fas fa-book"></i>
+                            Ver Documentación
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Zona de Peligro -->
+                <div class="card config-card danger-card">
+                    <div class="config-header">
+                        <div class="config-icon" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h3>Zona de Peligro</h3>
+                            <p>Acciones irreversibles</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="danger-warning">
+                            <i class="fas fa-shield-alt"></i>
+                            <p>Las siguientes acciones son permanentes y no se pueden deshacer.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-actions">
+                        <button class="btn btn-danger" onclick="cerrarSesionTodos()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Cerrar Todas las Sesiones
+                        </button>
+                        <button class="btn btn-danger" onclick="limpiarDatos()">
+                            <i class="fas fa-trash-alt"></i>
+                            Limpiar Datos Locales
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Cambiar Contraseña -->
+    <div id="cambiarPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-key"></i>
+                    Cambiar Contraseña
+                </h2>
+                <span class="close" onclick="cerrarModalPassword()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="passwordActual">Contraseña Actual</label>
+                    <input type="password" id="passwordActual" placeholder="Ingresa tu contraseña actual">
+                </div>
+                
+                <div class="form-group">
+                    <label for="passwordNueva">Nueva Contraseña</label>
+                    <input type="password" id="passwordNueva" placeholder="Ingresa tu nueva contraseña">
+                </div>
+                
+                <div class="form-group">
+                    <label for="passwordConfirmar">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="passwordConfirmar" placeholder="Confirma tu nueva contraseña">
+                </div>
+                
+                <div class="password-requirements">
+                    <p><i class="fas fa-info-circle"></i> La contraseña debe tener al menos:</p>
+                    <ul>
+                        <li>8 caracteres de longitud</li>
+                        <li>Una letra mayúscula</li>
+                        <li>Una letra minúscula</li>
+                        <li>Un número</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="cambiarPassword()">
+                    <i class="fas fa-check"></i>
+                    Cambiar Contraseña
+                </button>
+                <button class="btn btn-secondary" onclick="cerrarModalPassword()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth-utils.js"></script>
+    <script src="assets/js/sidebar-component.js"></script>
+    <script src="assets/js/configuracion.js"></script>
+</body>
+</html>
