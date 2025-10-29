@@ -183,6 +183,104 @@ app.get("/tickets/:ticketId/archivo", async (req, res) => {
 // 📌 Ruta para actualizar ticket completo (PUT /tickets/:id)
 app.put("/tickets/:id", updateTicketController);
 
+// 📌 Ruta para agregar comentario a un ticket (POST /tickets/:id/comentarios)
+app.post("/tickets/:id/comentarios", async (req, res) => {
+  try {
+    const ticketNumber = parseInt(req.params.id);
+    const { texto, usuario_id, usuario_nombre } = req.body;
+    
+    console.log(`Agregando comentario al ticket #${ticketNumber}`);
+    console.log('Datos del comentario:', { texto, usuario_id, usuario_nombre });
+    
+    if (isNaN(ticketNumber)) {
+      return res.status(400).json({ 
+        message: "ID de ticket inválido", 
+        receivedId: req.params.id 
+      });
+    }
+    
+    if (!texto || !texto.trim()) {
+      return res.status(400).json({ message: "El texto del comentario es requerido" });
+    }
+    
+    // Buscar ticket por Number
+    const { Ticket } = require("./server/tickets");
+    const ticket = await Ticket.findOne({ Number: ticketNumber });
+    
+    if (!ticket) {
+      return res.status(404).json({ 
+        message: `Ticket #${ticketNumber} no encontrado` 
+      });
+    }
+    
+    // Crear nuevo comentario
+    const nuevoComentario = {
+      texto: texto.trim(),
+      fecha: new Date(),
+      usuario: usuario_nombre || 'Usuario desconocido',
+      usuario_id: usuario_id || null
+    };
+    
+    // Agregar comentario al array
+    if (!ticket.comentarios) {
+      ticket.comentarios = [];
+    }
+    ticket.comentarios.push(nuevoComentario);
+    ticket.UpdatedAt = Date.now();
+    
+    await ticket.save();
+    
+    console.log(`✅ Comentario agregado exitosamente al ticket #${ticketNumber}`);
+    
+    res.status(201).json({
+      message: "Comentario agregado exitosamente",
+      comentario: nuevoComentario,
+      ticket: ticket
+    });
+    
+  } catch (error) {
+    console.error('Error al agregar comentario:', error);
+    res.status(500).json({ 
+      message: "Error al agregar comentario", 
+      error: error.message 
+    });
+  }
+});
+
+// 📌 Ruta para obtener comentarios de un ticket (GET /tickets/:id/comentarios)
+app.get("/tickets/:id/comentarios", async (req, res) => {
+  try {
+    const ticketNumber = parseInt(req.params.id);
+    
+    if (isNaN(ticketNumber)) {
+      return res.status(400).json({ 
+        message: "ID de ticket inválido" 
+      });
+    }
+    
+    const { Ticket } = require("./server/tickets");
+    const ticket = await Ticket.findOne({ Number: ticketNumber });
+    
+    if (!ticket) {
+      return res.status(404).json({ 
+        message: `Ticket #${ticketNumber} no encontrado` 
+      });
+    }
+    
+    res.status(200).json({
+      ticketNumber: ticket.Number,
+      comentarios: ticket.comentarios || []
+    });
+    
+  } catch (error) {
+    console.error('Error al obtener comentarios:', error);
+    res.status(500).json({ 
+      message: "Error al obtener comentarios", 
+      error: error.message 
+    });
+  }
+});
+
 // 📌 Ruta de debug para listar tickets disponibles (GET /tickets/debug/list)
 app.get("/tickets/debug/list", async (req, res) => {
   try {

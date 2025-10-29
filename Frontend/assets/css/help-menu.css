@@ -1,0 +1,210 @@
+/* Contenedor del menú de ayuda */
+.help-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Botón de ayuda */
+.help-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.help-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.help-btn i {
+    font-size: 16px;
+}
+
+/* Menú desplegable */
+.help-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white;
+    min-width: 280px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideDown 0.3s ease;
+}
+
+.help-dropdown.show {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header del dropdown */
+.help-dropdown-header {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.help-dropdown-header i {
+    font-size: 18px;
+}
+
+/* Enlaces del dropdown */
+.help-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #2d3748;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.help-dropdown a:hover {
+    background: #f7fafc;
+    color: #667eea;
+}
+
+.help-dropdown a i {
+    width: 20px;
+    font-size: 16px;
+    color: #667eea;
+}
+
+/* Divisor */
+.help-dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 8px 0;
+}
+
+/* Ajuste al header principal */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+/* Modal grande para FAQ */
+.modal-large .modal-content {
+    max-width: 800px;
+}
+
+/* Contenedor de FAQ */
+.faq-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Item de FAQ */
+.faq-item {
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Pregunta */
+.faq-question {
+    width: 100%;
+    padding: 15px 20px;
+    background: white;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2d3748;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.faq-question:hover {
+    background: #f7fafc;
+}
+
+.faq-question i {
+    font-size: 12px;
+    color: #667eea;
+    transition: transform 0.3s ease;
+}
+
+.faq-question.active i {
+    transform: rotate(90deg);
+}
+
+/* Respuesta */
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #f7fafc;
+}
+
+.faq-answer.show {
+    max-height: 500px;
+}
+
+.faq-answer p {
+    padding: 15px 20px;
+    margin: 0;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .help-dropdown {
+        min-width: 250px;
+    }
+    
+    .main-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .help-menu-container {
+        width: 100%;
+    }
+    
+    .help-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

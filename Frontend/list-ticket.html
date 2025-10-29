@@ -119,6 +119,56 @@
         </div>
     </div>
 
+    <!-- Modal para responder al ticket -->
+    <div id="respuestaTicketModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-reply"></i>
+                    Atender Ticket <span id="respuestaTicketId">#000</span>
+                </h2>
+                <span class="close" onclick="cerrarModalRespuesta()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="ticket-info-summary">
+                    <h4 id="respuestaTituloTicket">Título del ticket</h4>
+                </div>
+                
+                <div class="form-group">
+                    <label for="respuestaTexto">Tu Respuesta <span class="required">*</span></label>
+                    <textarea 
+                        id="respuestaTexto" 
+                        rows="6" 
+                        placeholder="Escribe tu respuesta para el usuario..."
+                        required
+                    ></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nuevoEstado">Cambiar Estado del Ticket</label>
+                    <select id="nuevoEstado">
+                        <option value="Open">Abierto</option>
+                        <option value="In Progress" selected>En Progreso</option>
+                        <option value="Resolved">Resuelto</option>
+                        <option value="Closed">Cerrado</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-success" id="btnEnviarRespuesta">
+                    <i class="fas fa-paper-plane"></i>
+                    Enviar Respuesta
+                </button>
+                <button class="btn btn-secondary" onclick="cerrarModalRespuesta()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/auth-utils.js"></script>
     <script src="assets/js/sidebar-component.js"></script>
     <script src="assets/js/list-ticket.js"></script>

@@ -26,8 +26,14 @@ class SidebarComponent {
           </li>
           <li class="${this.activeMenuItem === 'tickets' ? 'active' : ''}">
             <a href="list-ticket.html">
+              <i class="fas fa-clipboard-list"></i>
+              <span>Tickets Asignados</span>
+            </a>
+          </li>
+          <li class="${this.activeMenuItem === 'my-tickets' ? 'active' : ''}">
+            <a href="my-tickets.html">
               <i class="fas fa-ticket-alt"></i>
-              <span>Mis Tickets</span>
+              <span>Mis Tickets Creados</span>
             </a>
           </li>
           <li class="${this.activeMenuItem === 'nuevo' ? 'active' : ''}">
@@ -37,7 +43,7 @@ class SidebarComponent {
             </a>
           </li>
           <li class="${this.activeMenuItem === 'reportes' ? 'active' : ''}">
-            <a href="#reportes">
+            <a href="reportes.html">
               <i class="fas fa-chart-bar"></i>
               <span>Reportes</span>
             </a>
@@ -113,9 +119,10 @@ class SidebarComponent {
     const menuMap = {
       'dashboard': 1,
       'tickets': 2,
-      'nuevo': 3,
-      'reportes': 4,
-      'configuracion': 5
+      'my-tickets': 3,
+      'nuevo': 4,
+      'reportes': 5,
+      'configuracion': 6
     };
     return menuMap[menuItem] || 1;
   }

@@ -6,6 +6,7 @@
     <title>Dashboard - SistemaTickets</title>
     <link rel="stylesheet" href="assets/css/sidebar.css">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/help-menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -16,8 +17,45 @@
         <!-- Contenido Principal -->
         <main class="main-content">
             <div class="main-header">
-                <h2>Dashboard</h2>
-                <p>Resumen general de tu actividad</p>
+                <div>
+                    <h2>Dashboard</h2>
+                    <p>Resumen general de tu actividad</p>
+                </div>
+                
+                <!-- Botón de Ayuda -->
+                <div class="help-menu-container">
+                    <button class="help-btn" onclick="toggleHelpMenu()">
+                        <i class="fas fa-question-circle"></i>
+                        Ayuda
+                    </button>
+                    <div id="helpDropdown" class="help-dropdown">
+                        <div class="help-dropdown-header">
+                            <i class="fas fa-life-ring"></i>
+                            Menú de Ayuda
+                        </div>
+                        <a href="#" onclick="abrirPreguntasFrecuentes(); return false;">
+                            <i class="fas fa-question"></i>
+                            Preguntas Frecuentes
+                        </a>
+                        <a href="#" onclick="abrirGuiaUsuario(); return false;">
+                            <i class="fas fa-book"></i>
+                            Guía de Usuario
+                        </a>
+                        <a href="#" onclick="abrirSoporte(); return false;">
+                            <i class="fas fa-headset"></i>
+                            Contactar Soporte
+                        </a>
+                        <a href="#" onclick="abrirTutoriales(); return false;">
+                            <i class="fas fa-video"></i>
+                            Video Tutoriales
+                        </a>
+                        <div class="help-dropdown-divider"></div>
+                        <a href="#" onclick="abrirAcercaDe(); return false;">
+                            <i class="fas fa-info-circle"></i>
+                            Acerca del Sistema
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <!-- Estadísticas -->
@@ -218,10 +256,100 @@
         </div>
     </div>
 
+    <!-- Modal de Preguntas Frecuentes -->
+    <div id="faqModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-question-circle"></i>
+                    Preguntas Frecuentes
+                </h2>
+                <span class="close" onclick="cerrarFaqModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="faq-container">
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <i class="fas fa-chevron-right"></i>
+                            ¿Cómo creo un nuevo ticket?
+                        </button>
+                        <div class="faq-answer">
+                            <p>Para crear un nuevo ticket, haz clic en el botón "Nuevo Ticket" en el menú lateral. Completa el formulario con el título, descripción, categoría y prioridad del problema que necesitas reportar.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <i class="fas fa-chevron-right"></i>
+                            ¿Cómo puedo ver el estado de mis tickets?
+                        </button>
+                        <div class="faq-answer">
+                            <p>Puedes ver todos tus tickets en la sección "Mis Tickets" del menú lateral. Allí encontrarás información sobre el estado, prioridad y fecha de cada ticket.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <i class="fas fa-chevron-right"></i>
+                            ¿Qué significan los diferentes estados de un ticket?
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Abierto:</strong> El ticket ha sido creado y está pendiente de atención.<br>
+                            <strong>En Progreso:</strong> Un técnico está trabajando en resolver el ticket.<br>
+                            <strong>Cerrado:</strong> El ticket ha sido resuelto y cerrado.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <i class="fas fa-chevron-right"></i>
+                            ¿Puedo adjuntar archivos a un ticket?
+                        </button>
+                        <div class="faq-answer">
+                            <p>Sí, al crear un ticket puedes adjuntar archivos como capturas de pantalla, documentos o logs que ayuden a describir mejor el problema.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <i class="fas fa-chevron-right"></i>
+                            ¿Cuánto tiempo tarda en responderse un ticket?
+                        </button>
+                        <div class="faq-answer">
+                            <p>El tiempo de respuesta depende de la prioridad del ticket:<br>
+                            • <strong>Alta:</strong> 2-4 horas<br>
+                            • <strong>Media:</strong> 8-12 horas<br>
+                            • <strong>Baja:</strong> 24-48 horas</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <i class="fas fa-chevron-right"></i>
+                            ¿Cómo contacto con soporte urgente?
+                        </button>
+                        <div class="faq-answer">
+                            <p>Para problemas urgentes, crea un ticket con prioridad "Alta" o contacta directamente con el equipo de soporte a través del botón "Contactar Soporte" en el menú de ayuda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarFaqModal()">
+                    <i class="fas fa-times"></i>
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cargar el componente sidebar primero -->
     <script src="assets/js/auth-utils.js"></script>
     <script src="assets/js/sidebar-component.js"></script>
     <script src="assets/js/dashboard.js"></script>
+    <script src="assets/js/help-menu.js"></script>
     
     <script>
         // La inicialización ahora se maneja automáticamente en dashboard.js

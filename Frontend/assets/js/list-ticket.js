@@ -173,8 +173,8 @@ function verDetallesTicket(ticket) {
   // Información del archivo
   mostrarArchivoEnDetalle(ticket);
   
-  // Mostrar comentarios
-  mostrarComentariosEnDetalle(ticket);
+  // Mostrar comentarios actualizados
+  cargarYMostrarComentarios(ticket.Number);
   
   // Configurar botón de atender
   document.getElementById('btnAtenderDesdeDetalle').onclick = () => {
@@ -185,6 +185,18 @@ function verDetallesTicket(ticket) {
   // Mostrar modal
   modal.style.display = 'block';
   document.body.style.overflow = 'hidden';
+}
+
+async function cargarYMostrarComentarios(ticketNumber) {
+  try {
+    const response = await fetch(`/tickets/${ticketNumber}/comentarios`);
+    if (response.ok) {
+      const data = await response.json();
+      mostrarComentariosEnDetalle({ comentarios: data.comentarios || [] });
+    }
+  } catch (error) {
+    console.error('Error al cargar comentarios:', error);
+  }
 }
 
 function mostrarArchivoEnDetalle(ticket) {
@@ -272,20 +284,162 @@ async function descargarArchivo(url, nombreArchivo) {
   }
 }
 
+function atenderTicket(ticket) {
+  const modal = document.getElementById('respuestaTicketModal');
+  const ticketId = ticket.ID || ticket.id;
+  
+  // Configurar información del ticket en el modal
+  document.getElementById('respuestaTicketId').textContent = `#${ticket.Number || ticketId}`;
+  document.getElementById('respuestaTituloTicket').textContent = ticket.Title || ticket.titulo;
+  
+  // Limpiar textarea
+  document.getElementById('respuestaTexto').value = '';
+  
+  // Configurar botón de envío
+  document.getElementById('btnEnviarRespuesta').onclick = () => enviarRespuesta(ticket);
+  
+  // Mostrar modal
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  
+  // Enfocar en el textarea
+  setTimeout(() => {
+    document.getElementById('respuestaTexto').focus();
+  }, 100);
+}
+
+async function enviarRespuesta(ticket) {
+  const textoRespuesta = document.getElementById('respuestaTexto').value.trim();
+  const nuevoEstado = document.getElementById('nuevoEstado').value;
+  const btnEnviar = document.getElementById('btnEnviarRespuesta');
+  
+  // Validar que haya texto
+  if (!textoRespuesta) {
+    alert('Por favor, escribe una respuesta antes de enviar.');
+    return;
+  }
+  
+  // Deshabilitar botón mientras se procesa
+  btnEnviar.disabled = true;
+  btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+  
+  try {
+    // Usar Number en lugar de ID
+    const ticketNumber = ticket.Number || ticket.id;
+    const usuario = obtenerUsuarioActual();
+    
+    console.log('Enviando respuesta al ticket:', ticketNumber);
+    console.log('Usuario actual:', usuario);
+    
+    if (!ticketNumber) {
+      throw new Error('No se pudo obtener el número del ticket');
+    }
+    
+    if (!usuario) {
+      throw new Error('No se pudo obtener la información del usuario');
+    }
+    
+    // Enviar comentario usando el Number del ticket
+    const comentarioResponse = await fetch(`/tickets/${ticketNumber}/comentarios`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        texto: textoRespuesta,
+        usuario_id: usuario.id || usuario._id,
+        usuario_nombre: usuario.nombre || usuario.username
+      })
+    });
+    
+    console.log('Respuesta del servidor:', comentarioResponse.status);
+    
+    if (!comentarioResponse.ok) {
+      const errorData = await comentarioResponse.json();
+      console.error('Error del servidor:', errorData);
+      throw new Error(errorData.message || 'Error al enviar comentario');
+    }
+    
+    const comentarioData = await comentarioResponse.json();
+    console.log('Comentario creado:', comentarioData);
+    
+    // Actualizar estado del ticket si cambió
+    const estadoActual = ticket.Status || ticket.estado;
+    if (nuevoEstado !== estadoActual) {
+      console.log(`Actualizando estado de ${estadoActual} a ${nuevoEstado}`);
+      
+      const estadoResponse = await fetch(`/tickets/${ticketNumber}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Status: nuevoEstado
+        })
+      });
+      
+      if (!estadoResponse.ok) {
+        console.warn('Error al actualizar estado del ticket');
+      } else {
+        console.log('Estado actualizado correctamente');
+      }
+    }
+    
+    // Mostrar mensaje de éxito
+    alert('Respuesta enviada correctamente');
+    
+    // Cerrar modal y recargar tickets
+    cerrarModalRespuesta();
+    const usuarioActual = obtenerUsuarioActual();
+    cargarTicketsAsignados(usuarioActual);
+    
+  } catch (error) {
+    console.error('Error al enviar respuesta:', error);
+    alert(`Error al enviar la respuesta: ${error.message}`);
+  } finally {
+    // Rehabilitar botón
+    btnEnviar.disabled = false;
+    btnEnviar.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Respuesta';
+  }
+}
+
+function cerrarModalRespuesta() {
+  const modal = document.getElementById('respuestaTicketModal');
+  modal.style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+function obtenerUsuarioActual() {
+  const usuarioStr = localStorage.getItem('usuario');
+  return usuarioStr ? JSON.parse(usuarioStr) : null;
+}
+
 // Cerrar modal al hacer clic fuera de él
 window.addEventListener('click', function(event) {
-  const modal = document.getElementById('detalleTicketModal');
-  if (event.target === modal) {
+  const modalDetalle = document.getElementById('detalleTicketModal');
+  const modalRespuesta = document.getElementById('respuestaTicketModal');
+  
+  if (event.target === modalDetalle) {
     cerrarModalDetalle();
+  }
+  
+  if (event.target === modalRespuesta) {
+    cerrarModalRespuesta();
   }
 });
 
 // Cerrar modal con tecla Escape
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
-    const modal = document.getElementById('detalleTicketModal');
-    if (modal.style.display === 'block') {
+    const modalDetalle = document.getElementById('detalleTicketModal');
+    const modalRespuesta = document.getElementById('respuestaTicketModal');
+    
+    if (modalDetalle.style.display === 'block') {
       cerrarModalDetalle();
+    }
+    
+    if (modalRespuesta.style.display === 'block') {
+      cerrarModalRespuesta();
     }
   }
 });

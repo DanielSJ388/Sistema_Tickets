@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tickets Creados - SistemaTickets</title>
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="page-container">
+        <main class="main-content">
+            <div class="main-header">
+                <h2>Mis Tickets Creados</h2>
+                <p>Tickets que has creado y su estado actual</p>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table class="tickets-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Asignado a</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myTicketsTableBody">
+                            <tr>
+                                <td colspan="7" class="loading">Cargando tickets...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Chat -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content modal-chat">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-comments"></i>
+                    Chat - Ticket <span id="chatTicketId">#000</span>
+                </h2>
+                <span class="close" onclick="cerrarModalChat()">&times;</span>
+            </div>
+            
+            <div class="chat-info">
+                <h4 id="chatTituloTicket">Título del ticket</h4>
+                <div class="chat-status">
+                    <span id="chatEstado" class="status-badge">Estado</span>
+                    <span id="chatAsignado" class="assigned-badge">Sin asignar</span>
+                </div>
+            </div>
+            
+            <div class="modal-body chat-body">
+                <div id="chatMessages" class="chat-messages">
+                    <p class="loading-chat">Cargando mensajes...</p>
+                </div>
+            </div>
+            
+            <div class="chat-footer">
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chatInput" 
+                        placeholder="Escribe tu mensaje..."
+                        rows="2"
+                    ></textarea>
+                    <button class="btn btn-primary" id="btnEnviarMensaje">
+                        <i class="fas fa-paper-plane"></i>
+                        Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth-utils.js"></script>
+    <script src="assets/js/sidebar-component.js"></script>
+    <script src="assets/js/my-tickets.js"></script>
+</body>
+</html>

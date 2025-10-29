@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes y Estadísticas - SistemaTickets</title>
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="page-container">
+        <main class="main-content">
+            <div class="main-header">
+                <h2>Reportes y Estadísticas</h2>
+                <p>Análisis general del sistema de tickets</p>
+            </div>
+
+            <!-- KPIs / Métricas principales -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3 id="totalTickets">0</h3>
+                        <p>Total de Tickets</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3 id="ticketsAbiertos">0</h3>
+                        <p>Tickets Abiertos</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3 id="ticketsEnProgreso">0</h3>
+                        <p>En Progreso</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="kpi-content">
+                        <h3 id="ticketsResueltos">0</h3>
+                        <p>Resueltos</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficas -->
+            <div class="charts-grid">
+                <div class="card chart-card">
+                    <div class="chart-header">
+                        <h3>Tickets por Estado</h3>
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <canvas id="chartEstados"></canvas>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="chart-header">
+                        <h3>Tickets por Prioridad</h3>
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <canvas id="chartPrioridades"></canvas>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="card chart-card">
+                    <div class="chart-header">
+                        <h3>Tendencia de Tickets (Últimos 7 días)</h3>
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <canvas id="chartTendencia"></canvas>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="chart-header">
+                        <h3>Tickets por Usuario</h3>
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <canvas id="chartUsuarios"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabla de resumen -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Resumen por Categoría</h3>
+                </div>
+                <div class="table-container">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Total</th>
+                                <th>Abiertos</th>
+                                <th>En Progreso</th>
+                                <th>Resueltos</th>
+                                <th>Tiempo Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCategorias">
+                            <tr>
+                                <td colspan="6" class="loading">Cargando estadísticas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/auth-utils.js"></script>
+    <script src="assets/js/sidebar-component.js"></script>
+    <script src="assets/js/reportes.js"></script>
+</body>
+</html>
