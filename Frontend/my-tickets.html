@@ -14,10 +14,18 @@
         <main class="main-content">
             <div class="main-header">
                 <h2>Mis Tickets Creados</h2>
-                <p>Tickets que has creado y su estado actual</p>
+                <p>Gestiona los tickets que has creado</p>
             </div>
 
-            <div class="card">
+            <!-- Tickets Activos -->
+            <div class="card mb-4">
+                <div class="card-header-section">
+                    <h3>
+                        <i class="fas fa-clock"></i>
+                        Tickets Activos
+                    </h3>
+                    <span class="badge-count" id="activeCount">0</span>
+                </div>
                 <div class="table-container">
                     <table class="tickets-table">
                         <thead>
@@ -31,9 +39,40 @@
                                 <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="myTicketsTableBody">
+                        <tbody id="activeTicketsTableBody">
                             <tr>
-                                <td colspan="7" class="loading">Cargando tickets...</td>
+                                <td colspan="7" class="loading">Cargando tickets activos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tickets Resueltos -->
+            <div class="card">
+                <div class="card-header-section">
+                    <h3>
+                        <i class="fas fa-check-circle"></i>
+                        Tickets Resueltos
+                    </h3>
+                    <span class="badge-count badge-success" id="resolvedCount">0</span>
+                </div>
+                <div class="table-container">
+                    <table class="tickets-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Fecha Creación</th>
+                                <th>Fecha Resolución</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resolvedTicketsTableBody">
+                            <tr>
+                                <td colspan="7" class="loading">Cargando tickets resueltos...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -67,7 +106,13 @@
                 </div>
             </div>
             
-            <div class="chat-footer">
+            <div class="chat-footer" id="chatFooter">
+                <div class="chat-actions-bar" id="chatActionsBar">
+                    <button class="btn btn-success btn-sm" id="btnCerrarTicket" onclick="cerrarTicket()">
+                        <i class="fas fa-check-circle"></i>
+                        Marcar como Resuelto
+                    </button>
+                </div>
                 <div class="chat-input-container">
                     <textarea 
                         id="chatInput" 
@@ -79,6 +124,39 @@
                         Enviar
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Vista de Ticket Resuelto -->
+    <div id="viewResolvedModal" class="modal">
+        <div class="modal-content modal-chat">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-eye"></i>
+                    Ver Conversación - Ticket <span id="viewTicketId">#000</span>
+                </h2>
+                <span class="close" onclick="cerrarModalViewResolved()">&times;</span>
+            </div>
+            
+            <div class="chat-info">
+                <h4 id="viewTituloTicket">Título del ticket</h4>
+                <div class="chat-status">
+                    <span id="viewEstado" class="status-badge">Estado</span>
+                </div>
+            </div>
+            
+            <div class="modal-body chat-body">
+                <div id="viewMessages" class="chat-messages">
+                    <p class="loading-chat">Cargando conversación...</p>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalViewResolved()">
+                    <i class="fas fa-times"></i>
+                    Cerrar
+                </button>
             </div>
         </div>
     </div>

@@ -105,12 +105,14 @@ function cargarPreferencias() {
 }
 
 function guardarPreferencias() {
+  const temaSeleccionado = document.querySelector('.theme-option.active')?.dataset.theme || 'light';
+  
   const preferencias = {
     notifEmail: document.getElementById('notifEmail').checked,
     notifBrowser: document.getElementById('notifBrowser').checked,
     notifSound: document.getElementById('notifSound').checked,
     fontSize: document.getElementById('fontSize').value,
-    theme: document.querySelector('.theme-option.active').dataset.theme
+    theme: temaSeleccionado
   };
   
   localStorage.setItem('preferencias', JSON.stringify(preferencias));
@@ -139,6 +141,19 @@ function aplicarPreferencias(preferencias) {
 function inicializarSelectoresTema() {
   const themeOptions = document.querySelectorAll('.theme-option');
   
+  // Cargar tema guardado o detectar preferencia del sistema
+  const temaGuardado = localStorage.getItem('theme') || 'auto';
+  aplicarTemaInicial(temaGuardado);
+  
+  // Marcar opción activa según tema guardado
+  themeOptions.forEach(opt => {
+    if (opt.dataset.theme === temaGuardado) {
+      opt.classList.add('active');
+    } else {
+      opt.classList.remove('active');
+    }
+  });
+  
   themeOptions.forEach(option => {
     option.addEventListener('click', () => {
       themeOptions.forEach(opt => opt.classList.remove('active'));
@@ -148,13 +163,60 @@ function inicializarSelectoresTema() {
       aplicarTema(theme);
     });
   });
+  
+  // Detectar cambios en preferencia del sistema
+  if (window.matchMedia) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', (e) => {
+      const temaActual = localStorage.getItem('theme');
+      if (temaActual === 'auto') {
+        aplicarTema('auto');
+      }
+    });
+  }
+}
+
+function aplicarTemaInicial(theme) {
+  const temaReal = obtenerTemaReal(theme);
+  // No aplicar transición al cargar inicialmente
+  document.documentElement.setAttribute('data-theme', temaReal);
+  localStorage.setItem('theme', theme);
 }
 
 function aplicarTema(theme) {
-  // Por ahora solo guardamos la preferencia
-  // En una implementación futura se aplicaría CSS dinámico
-  console.log('Tema seleccionado:', theme);
-  mostrarNotificacion(`Tema ${theme} seleccionado`, 'info');
+  const temaReal = obtenerTemaReal(theme);
+  
+  // Solo aplicar transición cuando el usuario cambia manualmente el tema
+  document.documentElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+  document.documentElement.setAttribute('data-theme', temaReal);
+  
+  // Guardar preferencia
+  localStorage.setItem('theme', theme);
+  
+  // Mensaje de confirmación
+  const mensajes = {
+    'light': 'Tema claro activado',
+    'dark': 'Tema oscuro activado',
+    'auto': `Tema automático activado (${temaReal === 'dark' ? 'oscuro' : 'claro'} según sistema)`
+  };
+  
+  mostrarNotificacion(mensajes[theme], 'success');
+  
+  // Quitar transición después de aplicar
+  setTimeout(() => {
+    document.documentElement.style.transition = '';
+  }, 300);
+}
+
+function obtenerTemaReal(theme) {
+  if (theme === 'auto') {
+    // Detectar preferencia del sistema
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  }
+  return theme;
 }
 
 // --- CAMBIAR CONTRASEÑA ---
@@ -179,6 +241,7 @@ async function cambiarPassword() {
   const passwordActual = document.getElementById('passwordActual').value;
   const passwordNueva = document.getElementById('passwordNueva').value;
   const passwordConfirmar = document.getElementById('passwordConfirmar').value;
+  const btnCambiar = document.querySelector('#cambiarPasswordModal .btn-success');
   
   // Validaciones
   if (!passwordActual || !passwordNueva || !passwordConfirmar) {
@@ -191,15 +254,145 @@ async function cambiarPassword() {
     return;
   }
   
-  if (passwordNueva.length < 8) {
-    mostrarNotificacion('La contraseña debe tener al menos 8 caracteres', 'error');
+  if (passwordNueva.length < 6) {
+    mostrarNotificacion('La nueva contraseña debe tener al menos 6 caracteres', 'error');
     return;
   }
   
-  // Aquí iría la lógica para cambiar la contraseña en el backend
-  // Por ahora solo simulamos el proceso
-  mostrarNotificacion('Funcionalidad en desarrollo', 'info');
-  cerrarModalPassword();
+  // Validación de complejidad (opcional pero recomendado)
+  const tieneNumero = /\d/.test(passwordNueva);
+  const tieneMayuscula = /[A-Z]/.test(passwordNueva);
+  const tieneMinuscula = /[a-z]/.test(passwordNueva);
+  
+  if (passwordNueva.length < 8 || !tieneNumero || !tieneMayuscula || !tieneMinuscula) {
+    mostrarNotificacion('La contraseña debe cumplir con todos los requisitos de seguridad', 'warning');
+    return;
+  }
+  
+  // Deshabilitar botón mientras se procesa
+  btnCambiar.disabled = true;
+  btnCambiar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cambiando...';
+  
+  try {
+    // Obtener usuario actual
+    const usuario = obtenerUsuarioActual();
+    if (!usuario || !usuario.id) {
+      throw new Error('No se pudo obtener la información del usuario');
+    }
+    
+    console.log('Intentando cambiar contraseña para usuario:', usuario.id);
+    
+    // Enviar solicitud al backend
+    const response = await fetch(`/users/${usuario.id}/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        passwordActual: passwordActual,
+        passwordNueva: passwordNueva
+      })
+    });
+    
+    const data = await response.json();
+    console.log('Respuesta del servidor:', data);
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Error al cambiar contraseña');
+    }
+    
+    // Éxito
+    mostrarNotificacion('Contraseña actualizada exitosamente', 'success');
+    cerrarModalPassword();
+    
+    // Opcional: cerrar sesión después de cambiar contraseña
+    setTimeout(() => {
+      if (confirm('Por seguridad, se recomienda cerrar sesión. ¿Deseas cerrar sesión ahora?')) {
+        localStorage.removeItem('usuario');
+        window.location.href = 'auth.html';
+      }
+    }, 1500);
+    
+  } catch (error) {
+    console.error('Error al cambiar contraseña:', error);
+    mostrarNotificacion(error.message, 'error');
+  } finally {
+    // Rehabilitar botón
+    btnCambiar.disabled = false;
+    btnCambiar.innerHTML = '<i class="fas fa-check"></i> Cambiar Contraseña';
+  }
+}
+
+function obtenerUsuarioActual() {
+  const usuarioStr = localStorage.getItem('usuario');
+  return usuarioStr ? JSON.parse(usuarioStr) : null;
+}
+
+// --- FUNCIONES AUXILIARES PARA EL MODAL DE CONTRASEÑA ---
+function togglePasswordVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  const button = input.parentElement.querySelector('.toggle-password i');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    button.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password';
+    button.className = 'fas fa-eye';
+  }
+}
+
+function validarPassword() {
+  const password = document.getElementById('passwordNueva').value;
+  const strengthBar = document.getElementById('passwordStrength');
+  
+  // Validar requisitos
+  const tieneNumero = /\d/.test(password);
+  const tieneMayuscula = /[A-Z]/.test(password);
+  const tieneMinuscula = /[a-z]/.test(password);
+  const longitudCorrecta = password.length >= 8;
+  
+  // Actualizar checklist visual
+  actualizarRequisito('req-length', longitudCorrecta);
+  actualizarRequisito('req-uppercase', tieneMayuscula);
+  actualizarRequisito('req-lowercase', tieneMinuscula);
+  actualizarRequisito('req-number', tieneNumero);
+  
+  // Calcular fuerza de la contraseña
+  let fuerza = 0;
+  if (longitudCorrecta) fuerza++;
+  if (tieneMayuscula) fuerza++;
+  if (tieneMinuscula) fuerza++;
+  if (tieneNumero) fuerza++;
+  if (password.length >= 12) fuerza++;
+  
+  // Mostrar indicador de fuerza
+  if (password.length === 0) {
+    strengthBar.innerHTML = '';
+    strengthBar.className = 'password-strength';
+  } else if (fuerza <= 2) {
+    strengthBar.innerHTML = '<span class="strength-weak">Débil</span>';
+    strengthBar.className = 'password-strength weak';
+  } else if (fuerza <= 3) {
+    strengthBar.innerHTML = '<span class="strength-medium">Media</span>';
+    strengthBar.className = 'password-strength medium';
+  } else {
+    strengthBar.innerHTML = '<span class="strength-strong">Fuerte</span>';
+    strengthBar.className = 'password-strength strong';
+  }
+}
+
+function actualizarRequisito(elementId, cumplido) {
+  const elemento = document.getElementById(elementId);
+  const icon = elemento.querySelector('i');
+  
+  if (cumplido) {
+    elemento.classList.add('requisito-cumplido');
+    icon.className = 'fas fa-check-circle';
+  } else {
+    elemento.classList.remove('requisito-cumplido');
+    icon.className = 'fas fa-circle';
+  }
 }
 
 // --- FUNCIONES ADICIONALES ---
@@ -219,8 +412,8 @@ function cerrarSesionTodos() {
   }
 }
 
-function limpiarDatos() {
-  if (confirm('¿Estás seguro de que deseas limpiar todos los datos locales? Esta acción no se puede deshacer.')) {
+
+function limpiarDatos() {  if (confirm('¿Estás seguro de que deseas limpiar todos los datos locales? Esta acción no se puede deshacer.')) {
     const usuario = localStorage.getItem('usuario');
     localStorage.clear();
     localStorage.setItem('usuario', usuario); // Mantener sesión
@@ -233,15 +426,23 @@ function limpiarDatos() {
 
 // --- SISTEMA DE NOTIFICACIONES ---
 function mostrarNotificacion(mensaje, tipo = 'info') {
+  // Remover notificaciones anteriores si existen
+  const notificacionesAnteriores = document.querySelectorAll('.notification');
+  notificacionesAnteriores.forEach(notif => {
+    notif.remove();
+  });
+  
   const notificacion = document.createElement('div');
   notificacion.className = `notification notification-${tipo}`;
   
-  const icon = {
+  const iconos = {
     'success': 'fa-check-circle',
     'error': 'fa-exclamation-circle',
     'info': 'fa-info-circle',
     'warning': 'fa-exclamation-triangle'
-  }[tipo];
+  };
+  
+  const icon = iconos[tipo] || 'fa-info-circle';
   
   notificacion.innerHTML = `
     <i class="fas ${icon}"></i>
@@ -250,16 +451,25 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
   
   document.body.appendChild(notificacion);
   
-  setTimeout(() => {
-    notificacion.classList.add('show');
-  }, 100);
+  // Forzar reflow para que la animación funcione
+  notificacion.offsetHeight;
   
+  // Agregar clase show después de un pequeño delay
+  requestAnimationFrame(() => {
+    notificacion.classList.add('show');
+  });
+  
+  // Remover notificación después de 3.5 segundos
   setTimeout(() => {
     notificacion.classList.remove('show');
+    
+    // Remover del DOM después de la animación
     setTimeout(() => {
-      notificacion.remove();
-    }, 300);
-  }, 3000);
+      if (notificacion.parentNode) {
+        notificacion.remove();
+      }
+    }, 400);
+  }, 3500);
 }
 
 // Cerrar modal con click fuera o Escape

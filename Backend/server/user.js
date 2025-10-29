@@ -89,4 +89,50 @@ async function obtenerUsuarios() {
   return await User.find({}, 'username email rol'); // Incluir rol en la respuesta
 }
 
-module.exports = { registrarUsuario, iniciarSesion, obtenerUsuarios };
+/**
+ * Cambia la contraseña de un usuario verificando la contraseña actual
+ * @param {Object} datos - { userId, passwordActual, passwordNueva }
+ * @returns {Promise<{ok: boolean, message: string}>}
+ */
+async function cambiarPassword(datos) {
+  const { userId, passwordActual, passwordNueva } = datos || {};
+
+  // Validación básica
+  if (!userId || !passwordActual || !passwordNueva) {
+    return { ok: false, message: "Faltan datos: userId, passwordActual y passwordNueva son obligatorios" };
+  }
+
+  if (passwordNueva.length < 6) {
+    return { ok: false, message: "La nueva contraseña debe tener al menos 6 caracteres" };
+  }
+
+  // Buscar usuario por ID
+  const usuario = await User.findById(userId);
+  if (!usuario) {
+    return { ok: false, message: "Usuario no encontrado" };
+  }
+
+  // Verificar que la contraseña actual sea correcta
+  const coincide = await bcrypt.compare(String(passwordActual), usuario.password);
+  if (!coincide) {
+    return { ok: false, message: "La contraseña actual es incorrecta" };
+  }
+
+  // Verificar que la nueva contraseña sea diferente a la actual
+  const esLaMisma = await bcrypt.compare(String(passwordNueva), usuario.password);
+  if (esLaMisma) {
+    return { ok: false, message: "La nueva contraseña debe ser diferente a la actual" };
+  }
+
+  // Encriptar la nueva contraseña
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash(String(passwordNueva), salt);
+
+  // Actualizar contraseña
+  usuario.password = passwordHash;
+  await usuario.save();
+
+  return { ok: true, message: "Contraseña actualizada exitosamente ✅" };
+}
+
+module.exports = { registrarUsuario, iniciarSesion, obtenerUsuarios, cambiarPassword };

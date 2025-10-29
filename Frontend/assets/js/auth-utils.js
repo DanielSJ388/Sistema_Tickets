@@ -1,4 +1,26 @@
 /**
+ * Utilidades de autenticación compartidas
+ */
+
+// Aplicar tema inmediatamente (antes de DOMContentLoaded)
+(function() {
+  const temaGuardado = localStorage.getItem('theme') || 'auto';
+  const temaReal = obtenerTemaRealSync(temaGuardado);
+  document.documentElement.setAttribute('data-theme', temaReal);
+})();
+
+// Función síncrona para obtener tema real
+function obtenerTemaRealSync(theme) {
+  if (theme === 'auto') {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  }
+  return theme;
+}
+
+/**
  * Verifica si el usuario está autenticado y configura la sesión
  * @returns {Object|null} - Objeto del usuario si está autenticado, null si no
  */
@@ -56,6 +78,40 @@ function inicializarUsuarioUI(usuario) {
 }
 
 /**
+ * Función para validar sesión
+ */
+function validarSesion() {
+  const usuarioStr = localStorage.getItem('usuario');
+  
+  if (!usuarioStr) {
+    return null;
+  }
+  
+  try {
+    const usuario = JSON.parse(usuarioStr);
+    
+    // Validar que el objeto tenga las propiedades mínimas necesarias
+    if (!usuario.id && !usuario._id) {
+      console.error('Usuario sin ID válido');
+      return null;
+    }
+    
+    return usuario;
+  } catch (error) {
+    console.error('Error al parsear usuario de localStorage:', error);
+    localStorage.removeItem('usuario');
+    return null;
+  }
+}
+
+/**
+ * Función para obtener usuario actual
+ */
+function obtenerUsuarioActual() {
+  return validarSesion();
+}
+
+/**
  * Función para cerrar sesión
  */
 function cerrarSesion() {
@@ -85,19 +141,62 @@ function debugStorage() {
  * @returns {Object|null} - Usuario autenticado o null
  */
 function inicializarAuth(currentPage = 'dashboard') {
-  const usuario = verificarAutenticacion();
+  // Aplicar tema guardado inmediatamente
+  aplicarTemaGuardado();
   
-  if (usuario) {
-    inicializarUsuarioUI(usuario);
-    
-    // Inicializar sidebar si existe la función
-    if (typeof initSidebar === 'function') {
-      window.sidebarInstance = initSidebar(currentPage);
-    }
-    
-    // Exponer función de debug globalmente
-    window.debugStorage = debugStorage;
+  // Validar sesión
+  const usuario = validarSesion();
+  
+  if (!usuario) {
+    console.warn('No hay sesión activa, redirigiendo a login');
+    window.location.href = 'auth.html';
+    return null;
   }
   
+  inicializarUsuarioUI(usuario);
+    
+  // Inicializar sidebar con página activa
+  if (typeof window.initSidebar === 'function') {
+    window.initSidebar(currentPage);
+  }
+  
+  // Exponer función de debug globalmente
+  window.debugStorage = debugStorage;
+  
   return usuario;
+}
+
+/**
+ * Función para aplicar tema guardado
+ */
+function aplicarTemaGuardado() {
+  const temaGuardado = localStorage.getItem('theme') || 'auto';
+  const temaReal = obtenerTemaReal(temaGuardado);
+  document.documentElement.setAttribute('data-theme', temaReal);
+}
+
+/**
+ * Función para obtener tema real (considerando modo auto)
+ */
+function obtenerTemaReal(theme) {
+  if (theme === 'auto') {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  }
+  return theme;
+}
+
+// Detectar cambios en la preferencia del sistema para modo auto
+if (window.matchMedia) {
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  
+  mediaQuery.addEventListener('change', (e) => {
+    const temaActual = localStorage.getItem('theme');
+    if (temaActual === 'auto') {
+      const nuevoTema = e.matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', nuevoTema);
+    }
+  });
 }

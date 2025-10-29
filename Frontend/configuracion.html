@@ -302,27 +302,46 @@
             
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="passwordActual">Contraseña Actual</label>
-                    <input type="password" id="passwordActual" placeholder="Ingresa tu contraseña actual">
+                    <label for="passwordActual">Contraseña Actual <span class="required">*</span></label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="passwordActual" placeholder="Ingresa tu contraseña actual" required>
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('passwordActual')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="passwordNueva">Nueva Contraseña</label>
-                    <input type="password" id="passwordNueva" placeholder="Ingresa tu nueva contraseña">
+                    <label for="passwordNueva">Nueva Contraseña <span class="required">*</span></label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="passwordNueva" placeholder="Ingresa tu nueva contraseña" required oninput="validarPassword()">
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('passwordNueva')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="passwordStrength" class="password-strength"></div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="passwordConfirmar">Confirmar Nueva Contraseña</label>
-                    <input type="password" id="passwordConfirmar" placeholder="Confirma tu nueva contraseña">
+                    <label for="passwordConfirmar">Confirmar Nueva Contraseña <span class="required">*</span></label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="passwordConfirmar" placeholder="Confirma tu nueva contraseña" required>
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('passwordConfirmar')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="password-requirements">
-                    <p><i class="fas fa-info-circle"></i> La contraseña debe tener al menos:</p>
-                    <ul>
-                        <li>8 caracteres de longitud</li>
-                        <li>Una letra mayúscula</li>
-                        <li>Una letra minúscula</li>
-                        <li>Un número</li>
+                    <p><i class="fas fa-info-circle"></i> La contraseña debe cumplir con:</p>
+                    <ul id="passwordChecklist">
+                        <li id="req-length"><i class="fas fa-circle"></i> Mínimo 8 caracteres</li>
+                        <li id="req-uppercase"><i class="fas fa-circle"></i> Una letra mayúscula</li>
+                        <li id="req-lowercase"><i class="fas fa-circle"></i> Una letra minúscula</li>
+                        <li id="req-number"><i class="fas fa-circle"></i> Un número</li>
                     </ul>
                 </div>
             </div>

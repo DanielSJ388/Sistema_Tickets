@@ -10,7 +10,7 @@ const cors = require("cors");
 const multer = require("multer"); // Para manejo de archivos
 const path = require("path");
 const fs = require("fs");
-const { registrarUsuario, iniciarSesion, obtenerUsuarios } = require("./server/user");
+const { registrarUsuario, iniciarSesion, obtenerUsuarios, cambiarPassword } = require("./server/user");
 const { 
   getAllTickets, 
   createTicketController, 
@@ -123,6 +123,32 @@ app.post("/login", async (req, res) => {
     res.status(200).json({ message: resultado.message, user: resultado.user });
   } catch (err) {
     res.status(500).json({ message: "Error en el servidor", error: err });
+  }
+});
+
+// 📌 Ruta para cambiar contraseña (PUT /users/:userId/change-password)
+app.put("/users/:userId/change-password", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { passwordActual, passwordNueva } = req.body;
+    
+    console.log(`Solicitud de cambio de contraseña para usuario: ${userId}`);
+    
+    const resultado = await cambiarPassword({
+      userId,
+      passwordActual,
+      passwordNueva
+    });
+    
+    if (!resultado.ok) {
+      return res.status(400).json({ message: resultado.message });
+    }
+    
+    res.status(200).json({ message: resultado.message });
+    
+  } catch (err) {
+    console.error('Error al cambiar contraseña:', err);
+    res.status(500).json({ message: "Error en el servidor", error: err.message });
   }
 });
 
