@@ -1358,18 +1358,23 @@ select:focus {
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.role-badge.admin,
-.role-badge.administrador {
-    background-color: #fee2e2;
-    color: #dc2626;
+.role-badge.role-super {
+    background-color: #fef3c7;
+    color: #92400e;
 }
 
-.role-badge.usuario,
-.role-badge.user {
+.role-badge.role-administrador {
     background-color: #dbeafe;
-    color: #2563eb;
+    color: #1e40af;
+}
+
+.role-badge.role-usuario {
+    background-color: #e5e7eb;
+    color: #374151;
 }
 
 .stat-item {

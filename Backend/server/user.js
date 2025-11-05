@@ -5,55 +5,114 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
+// 📌 CÓDIGO SECRETO PARA SUPERUSER (cambiar en producción)
+const SUPERUSER_SECRET_CODE = process.env.SUPERUSER_CODE || "SUPER_ADMIN_2024";
+
 // 📌 Modelo Usuario (colección "users")
 const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true }, // nombre de usuario único
-  email:    { type: String, required: true, unique: true, trim: true, lowercase: true }, // correo único
-  password: { type: String, required: true },                // contraseña encriptada
-  rol: { type: String, default: 'Usuario', enum: ['Usuario', 'Administrador', 'Soporte'] }
+  username: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  password: { type: String, required: true },
+  rol: { 
+    type: String, 
+    default: 'Usuario', 
+    enum: ['SuperUser', 'Administrador', 'Usuario'] 
+  },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now },
+  isActive: { type: Boolean, default: true }
 });
 const User = mongoose.model("User", UserSchema);
 
 /**
- * Registra un usuario en la base de datos, encriptando la contraseña.
- * @param {Object} datos - { username, email, password }
- * @returns {Promise<{ok: boolean, message: string}>}
+ * Registra un usuario en la base de datos
+ * @param {Object} datos - { username, email, password, rol, createdBy, superUserCode }
  */
 async function registrarUsuario(datos) {
-  const { username, email, password } = datos || {};
+  const { username, email, password, rol, createdBy, superUserCode } = datos || {};
 
-  // Validación básica
   if (!username || !email || !password) {
     return { ok: false, message: "Faltan datos: username, email y password son obligatorios" };
   }
+  
   const usernameClean = String(username).trim();
   const emailClean = String(email).toLowerCase().trim();
   const passwordStr = String(password);
+  let rolFinal = rol || 'Usuario';
 
   if (passwordStr.length < 6) {
     return { ok: false, message: "La contraseña debe tener al menos 6 caracteres" };
   }
 
-  // Verifica si ya existe usuario o correo
+  // 🔐 VALIDACIÓN ESPECIAL PARA SUPERUSER
+  if (rol === 'SuperUser') {
+    // Verificar si ya existe un SuperUser
+    const superUserExistente = await User.findOne({ rol: 'SuperUser', isActive: true });
+    
+    if (superUserExistente) {
+      return { 
+        ok: false, 
+        message: "Ya existe un SuperUser en el sistema. Solo puede haber uno." 
+      };
+    }
+    
+    // Validar código secreto
+    if (!superUserCode || superUserCode !== SUPERUSER_SECRET_CODE) {
+      return { 
+        ok: false, 
+        message: "Código de SuperUser inválido. Acceso denegado." 
+      };
+    }
+    
+    console.log('✅ Código de SuperUser validado correctamente');
+  }
+
+  // Validar permisos si se especifica un rol diferente a Usuario
+  if (rol && rol !== 'Usuario' && rol !== 'SuperUser') {
+    if (!createdBy) {
+      return { ok: false, message: "Se requiere autenticación para crear usuarios con roles especiales" };
+    }
+    
+    const creadorUser = await User.findById(createdBy);
+    if (!creadorUser) {
+      return { ok: false, message: "Usuario creador no encontrado" };
+    }
+    
+    // Solo SuperUser puede crear Administradores
+    if (rol === 'Administrador' && creadorUser.rol !== 'SuperUser') {
+      return { ok: false, message: "Solo SuperUser puede crear Administradores" };
+    }
+    
+    // Solo SuperUser y Administrador pueden crear otros usuarios
+    if (!['SuperUser', 'Administrador'].includes(creadorUser.rol)) {
+      return { ok: false, message: "No tienes permisos para crear usuarios" };
+    }
+  }
+
   const existe = await User.findOne({ $or: [{ username: usernameClean }, { email: emailClean }] });
   if (existe) {
     return { ok: false, message: "Usuario o correo ya registrado" };
   }
 
-  // Encripta la contraseña antes de guardar
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(passwordStr, salt);
 
-  // Crea y guarda el nuevo usuario con la contraseña encriptada
-  const nuevoUsuario = new User({ username: usernameClean, email: emailClean, password: passwordHash });
+  const nuevoUsuario = new User({ 
+    username: usernameClean, 
+    email: emailClean, 
+    password: passwordHash,
+    rol: rolFinal,
+    createdBy: createdBy || null
+  });
+  
   await nuevoUsuario.save();
-  return { ok: true, message: "Usuario registrado exitosamente ✅" };
+  
+  const mensajeRol = rolFinal === 'SuperUser' ? ' como SUPERUSER' : '';
+  return { ok: true, message: `Usuario registrado exitosamente${mensajeRol} ✅` };
 }
 
 /**
- * Inicia sesión verificando usuario/email + contraseña.
- * @param {Object} datos - { identifier, password } (identifier puede ser username o email)
- * @returns {Promise<{ok: boolean, message: string, user?: {id:string, username:string, email:string}}>}
+ * Inicia sesión y retorna información del usuario con su rol
  */
 async function iniciarSesion(datos) {
   const { identifier, password } = datos || {};
@@ -69,8 +128,11 @@ async function iniciarSesion(datos) {
 
   const usuario = await User.findOne(query);
   if (!usuario) {
-    // Mensaje genérico para no filtrar si existe o no
     return { ok: false, message: "Credenciales inválidas" };
+  }
+  
+  if (!usuario.isActive) {
+    return { ok: false, message: "Usuario desactivado. Contacta al administrador" };
   }
 
   const coincide = await bcrypt.compare(String(password), usuario.password);
@@ -81,12 +143,80 @@ async function iniciarSesion(datos) {
   return {
     ok: true,
     message: "Inicio de sesión exitoso ✅",
-    user: { id: usuario._id.toString(), username: usuario.username, email: usuario.email }
+    user: { 
+      id: usuario._id.toString(), 
+      username: usuario.username, 
+      email: usuario.email,
+      rol: usuario.rol,
+      createdAt: usuario.createdAt
+    }
   };
 }
 
 async function obtenerUsuarios() {
-  return await User.find({}, 'username email rol'); // Incluir rol en la respuesta
+  return await User.find({ isActive: true }, 'username email rol createdAt');
+}
+
+/**
+ * Cambiar rol de un usuario (solo SuperUser)
+ */
+async function cambiarRolUsuario(datos) {
+  const { userId, nuevoRol, adminId } = datos || {};
+  
+  if (!userId || !nuevoRol || !adminId) {
+    return { ok: false, message: "Faltan datos requeridos" };
+  }
+  
+  // Verificar que quien hace el cambio es SuperUser
+  const admin = await User.findById(adminId);
+  if (!admin || admin.rol !== 'SuperUser') {
+    return { ok: false, message: "Solo SuperUser puede cambiar roles" };
+  }
+  
+  const usuario = await User.findById(userId);
+  if (!usuario) {
+    return { ok: false, message: "Usuario no encontrado" };
+  }
+  
+  // No se puede cambiar el rol del SuperUser original
+  if (usuario.rol === 'SuperUser') {
+    return { ok: false, message: "No se puede modificar el rol de SuperUser" };
+  }
+  
+  usuario.rol = nuevoRol;
+  await usuario.save();
+  
+  return { ok: true, message: "Rol actualizado exitosamente" };
+}
+
+/**
+ * Desactivar usuario (solo SuperUser y Administrador)
+ */
+async function desactivarUsuario(datos) {
+  const { userId, adminId } = datos || {};
+  
+  if (!userId || !adminId) {
+    return { ok: false, message: "Faltan datos requeridos" };
+  }
+  
+  const admin = await User.findById(adminId);
+  if (!admin || !['SuperUser', 'Administrador'].includes(admin.rol)) {
+    return { ok: false, message: "No tienes permisos para desactivar usuarios" };
+  }
+  
+  const usuario = await User.findById(userId);
+  if (!usuario) {
+    return { ok: false, message: "Usuario no encontrado" };
+  }
+  
+  if (usuario.rol === 'SuperUser') {
+    return { ok: false, message: "No se puede desactivar al SuperUser" };
+  }
+  
+  usuario.isActive = false;
+  await usuario.save();
+  
+  return { ok: true, message: "Usuario desactivado exitosamente" };
 }
 
 /**
@@ -135,4 +265,11 @@ async function cambiarPassword(datos) {
   return { ok: true, message: "Contraseña actualizada exitosamente ✅" };
 }
 
-module.exports = { registrarUsuario, iniciarSesion, obtenerUsuarios, cambiarPassword };
+module.exports = { 
+  registrarUsuario, 
+  iniciarSesion, 
+  obtenerUsuarios, 
+  cambiarPassword,
+  cambiarRolUsuario,
+  desactivarUsuario
+};

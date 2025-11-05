@@ -19,14 +19,28 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
   font-size: 1.25rem;
   font-weight: 600;
 }
 
-.sidebar-header i {
-  font-size: 1.5rem;
-  color: #60a5fa;
+.role-indicator {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.role-indicator.super {
+  background-color: #fbbf24;
+  color: #78350f;
+}
+
+.role-indicator.admin {
+  background-color: #60a5fa;
+  color: #1e3a8a;
 }
 
 .sidebar-menu {
@@ -94,13 +108,23 @@
 
 .user-name {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   margin-bottom: 0.25rem;
 }
 
 .user-role {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.user-role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 5px;
 }
 
 .logout-link {

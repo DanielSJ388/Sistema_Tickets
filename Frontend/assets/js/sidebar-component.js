@@ -11,43 +11,68 @@ class SidebarComponent {
   }
 
   render() {
+    const usuario = obtenerInfoUsuario();
+    const rol = usuario?.rol || 'Usuario';
+    
     const sidebarHTML = `
       <aside class="sidebar">
         <div class="sidebar-header">
           🎫 SistemaTickets
+          ${rol === 'SuperUser' ? '<span class="role-indicator super">SUPER</span>' : ''}
+          ${rol === 'Administrador' ? '<span class="role-indicator admin">ADMIN</span>' : ''}
         </div>
         
         <ul class="sidebar-menu">
+          ${['SuperUser', 'Administrador'].includes(rol) ? `
           <li class="${this.activeMenuItem === 'dashboard' ? 'active' : ''}">
             <a href="dashboard.html">
               <i class="fas fa-tachometer-alt"></i>
               <span>Dashboard</span>
             </a>
           </li>
+          ` : ''}
+          
+          ${['SuperUser', 'Administrador'].includes(rol) ? `
           <li class="${this.activeMenuItem === 'tickets' ? 'active' : ''}">
             <a href="list-ticket.html">
               <i class="fas fa-clipboard-list"></i>
-              <span>Tickets Asignados</span>
+              <span>Gestionar Tickets</span>
             </a>
           </li>
+          ` : ''}
+          
           <li class="${this.activeMenuItem === 'my-tickets' ? 'active' : ''}">
             <a href="my-tickets.html">
               <i class="fas fa-ticket-alt"></i>
-              <span>Mis Tickets Creados</span>
+              <span>Mis Tickets</span>
             </a>
           </li>
+          
           <li class="${this.activeMenuItem === 'nuevo' ? 'active' : ''}">
             <a href="send_ticket.html">
               <i class="fas fa-plus-circle"></i>
               <span>Nuevo Ticket</span>
             </a>
           </li>
+          
+          ${['SuperUser', 'Administrador'].includes(rol) ? `
           <li class="${this.activeMenuItem === 'reportes' ? 'active' : ''}">
             <a href="reportes.html">
               <i class="fas fa-chart-bar"></i>
               <span>Reportes</span>
             </a>
           </li>
+          ` : ''}
+          
+          ${rol === 'SuperUser' ? `
+          <li class="${this.activeMenuItem === 'usuarios' ? 'active' : ''}">
+            <a href="usuarios.html">
+              <i class="fas fa-users-cog"></i>
+              <span>Gestión de Usuarios</span>
+            </a>
+          </li>
+          ` : ''}
+          
           <li class="${this.activeMenuItem === 'configuracion' ? 'active' : ''}">
             <a href="configuracion.html">
               <i class="fas fa-cog"></i>
@@ -68,7 +93,6 @@ class SidebarComponent {
       </aside>
     `;
 
-    // Insertar el sidebar al inicio del page-container
     const pageContainer = document.querySelector('.page-container');
     if (pageContainer) {
       pageContainer.insertAdjacentHTML('afterbegin', sidebarHTML);
@@ -86,12 +110,15 @@ class SidebarComponent {
   }
 
   loadUserInfo() {
-    // Usar 'usuario' para mantener consistencia con auth.js y dashboard.js
     const user = JSON.parse(localStorage.getItem('usuario'));
     const userInfoElement = document.getElementById('user-info');
     
     if (user && userInfoElement) {
-      userInfoElement.textContent = `👤 ${user.username}`;
+      const rolBadge = user.rol ? `<span class="user-role-badge">${user.rol}</span>` : '';
+      userInfoElement.innerHTML = `
+        <div class="user-name">👤 ${user.username}</div>
+        ${rolBadge}
+      `;
     }
   }
 
@@ -122,7 +149,8 @@ class SidebarComponent {
       'my-tickets': 3,
       'nuevo': 4,
       'reportes': 5,
-      'configuracion': 6
+      'usuarios': 6,
+      'configuracion': 7
     };
     return menuMap[menuItem] || 1;
   }

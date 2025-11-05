@@ -10,7 +10,7 @@ const cors = require("cors");
 const multer = require("multer"); // Para manejo de archivos
 const path = require("path");
 const fs = require("fs");
-const { registrarUsuario, iniciarSesion, obtenerUsuarios, cambiarPassword } = require("./server/user");
+const { registrarUsuario, iniciarSesion, obtenerUsuarios, cambiarPassword, cambiarRolUsuario, desactivarUsuario } = require("./server/user");
 const { 
   getAllTickets, 
   createTicketController, 
@@ -148,6 +148,50 @@ app.put("/users/:userId/change-password", async (req, res) => {
     
   } catch (err) {
     console.error('Error al cambiar contraseña:', err);
+    res.status(500).json({ message: "Error en el servidor", error: err.message });
+  }
+});
+
+// 📌 Ruta para cambiar rol de usuario (PUT /users/:userId/role) - Solo SuperUser
+app.put("/users/:userId/role", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { nuevoRol, adminId } = req.body;
+    
+    console.log(`Solicitud de cambio de rol para usuario: ${userId} a ${nuevoRol}`);
+    
+    const resultado = await cambiarRolUsuario({ userId, nuevoRol, adminId });
+    
+    if (!resultado.ok) {
+      return res.status(400).json({ message: resultado.message });
+    }
+    
+    res.status(200).json({ message: resultado.message });
+    
+  } catch (err) {
+    console.error('Error al cambiar rol:', err);
+    res.status(500).json({ message: "Error en el servidor", error: err.message });
+  }
+});
+
+// 📌 Ruta para desactivar usuario (PUT /users/:userId/deactivate)
+app.put("/users/:userId/deactivate", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { adminId } = req.body;
+    
+    console.log(`Solicitud de desactivación de usuario: ${userId}`);
+    
+    const resultado = await desactivarUsuario({ userId, adminId });
+    
+    if (!resultado.ok) {
+      return res.status(400).json({ message: resultado.message });
+    }
+    
+    res.status(200).json({ message: resultado.message });
+    
+  } catch (err) {
+    console.error('Error al desactivar usuario:', err);
     res.status(500).json({ message: "Error en el servidor", error: err.message });
   }
 });

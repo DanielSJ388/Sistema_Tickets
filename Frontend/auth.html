@@ -32,6 +32,30 @@
         <input type="password" id="reg-password" placeholder="🔒 Contraseña" required>
       </div>
       
+      <!-- Campo oculto para código de SuperUser -->
+      <div id="superuser-field" class="input-group superuser-field" style="display: none;">
+        <input 
+          type="password" 
+          id="reg-superuser-code" 
+          placeholder="🛡️ Código de SuperUser"
+          autocomplete="off"
+        >
+        <small class="superuser-hint">
+          <i class="fas fa-info-circle"></i> 
+          Introduce el código secreto para registrarte como SuperUser
+        </small>
+      </div>
+      
+      <!-- Botón para mostrar/ocultar campo SuperUser -->
+      <button 
+        type="button" 
+        class="btn-superuser-toggle" 
+        id="toggle-superuser-btn"
+        onclick="toggleSuperUserField()"
+      >
+        <i class="fas fa-user-shield"></i> Registrar como SuperUser
+      </button>
+      
       <button class="btn-primary" onclick="registrar()">Crear Cuenta</button>
       
       <div class="toggle-section">

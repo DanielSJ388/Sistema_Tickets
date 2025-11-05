@@ -112,6 +112,68 @@ body {
   transform: translateY(0);
 }
 
+/* Estilos para campo de SuperUser */
+.superuser-field {
+  position: relative;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  padding: 15px;
+  border-radius: 12px;
+  border: 2px dashed #667eea;
+  margin-bottom: 15px;
+}
+
+.superuser-field input {
+  background: white;
+  border: 2px solid #667eea;
+}
+
+.superuser-field input:focus {
+  border-color: #764ba2;
+  box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+}
+
+.superuser-hint {
+  display: block;
+  margin-top: 8px;
+  color: #667eea;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.superuser-hint i {
+  font-size: 14px;
+}
+
+.btn-superuser-toggle {
+  width: 100%;
+  padding: 10px;
+  background: #6c757d;
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-superuser-toggle:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-superuser-toggle i {
+  font-size: 14px;
+}
+
 .toggle-section {
   text-align: center;
   margin-top: 25px;

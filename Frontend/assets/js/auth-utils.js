@@ -136,13 +136,12 @@ function debugStorage() {
 }
 
 /**
- * Inicialización completa de autenticación y UI
- * @param {string} currentPage - Página actual para el sidebar
+ * Función principal para inicializar autenticación
+ * @param {string} paginaActual - Página actual para el sidebar
  * @returns {Object|null} - Usuario autenticado o null
  */
-function inicializarAuth(currentPage = 'dashboard') {
-  // Aplicar tema guardado inmediatamente
-  aplicarTemaGuardado();
+function inicializarAuth(paginaActual) {
+  // El tema ya está aplicado por el IIFE al inicio
   
   // Validar sesión
   const usuario = validarSesion();
@@ -153,15 +152,41 @@ function inicializarAuth(currentPage = 'dashboard') {
     return null;
   }
   
-  inicializarUsuarioUI(usuario);
-    
-  // Inicializar sidebar con página activa
-  if (typeof window.initSidebar === 'function') {
-    window.initSidebar(currentPage);
+  // Verificar permisos de acceso según la página
+  const rol = usuario.rol || 'Usuario';
+  
+  // Dashboard solo para SuperUser y Administrador
+  if (paginaActual === 'dashboard' && !['SuperUser', 'Administrador'].includes(rol)) {
+    console.warn('Acceso denegado a dashboard para usuario tipo:', rol);
+    window.location.href = 'my-tickets.html';
+    return null;
   }
   
-  // Exponer función de debug globalmente
-  window.debugStorage = debugStorage;
+  // Gestionar tickets solo para SuperUser y Administrador
+  if (paginaActual === 'tickets' && !['SuperUser', 'Administrador'].includes(rol)) {
+    console.warn('Acceso denegado a gestión de tickets para usuario tipo:', rol);
+    window.location.href = 'my-tickets.html';
+    return null;
+  }
+  
+  // Reportes solo para SuperUser y Administrador
+  if (paginaActual === 'reportes' && !['SuperUser', 'Administrador'].includes(rol)) {
+    console.warn('Acceso denegado a reportes para usuario tipo:', rol);
+    window.location.href = 'my-tickets.html';
+    return null;
+  }
+  
+  // Gestión de usuarios solo para SuperUser
+  if (paginaActual === 'usuarios' && rol !== 'SuperUser') {
+    console.warn('Acceso denegado a gestión de usuarios para usuario tipo:', rol);
+    window.location.href = 'my-tickets.html';
+    return null;
+  }
+  
+  // Inicializar sidebar con página activa
+  if (typeof window.initSidebar === 'function') {
+    window.initSidebar(paginaActual);
+  }
   
   return usuario;
 }
@@ -199,4 +224,58 @@ if (window.matchMedia) {
       document.documentElement.setAttribute('data-theme', nuevoTema);
     }
   });
+}
+
+// Función para obtener información del usuario
+function obtenerInfoUsuario() {
+  const usuario = validarSesion();
+  if (!usuario) return null;
+  
+  return {
+    id: usuario.id || usuario._id,
+    username: usuario.username || usuario.nombre,
+    email: usuario.email,
+    rol: usuario.rol || usuario.role || 'Usuario'
+  };
+}
+
+// Funciones de verificación de permisos
+function esSuperUser() {
+  const usuario = validarSesion();
+  return usuario && usuario.rol === 'SuperUser';
+}
+
+function esAdministrador() {
+  const usuario = validarSesion();
+  return usuario && usuario.rol === 'Administrador';
+}
+
+function esUsuario() {
+  const usuario = validarSesion();
+  return usuario && usuario.rol === 'Usuario';
+}
+
+function tienePermisoAdmin() {
+  const usuario = validarSesion();
+  return usuario && ['SuperUser', 'Administrador'].includes(usuario.rol);
+}
+
+function puedeGestionarTickets() {
+  return tienePermisoAdmin();
+}
+
+function puedeCrearUsuarios() {
+  return tienePermisoAdmin();
+}
+
+function puedeGestionarRoles() {
+  return esSuperUser();
+}
+
+// Función para obtener la página de inicio según el rol
+function obtenerPaginaInicio(rol) {
+  if (['SuperUser', 'Administrador'].includes(rol)) {
+    return 'dashboard.html';
+  }
+  return 'my-tickets.html';
 }

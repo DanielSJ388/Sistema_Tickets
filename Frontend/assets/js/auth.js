@@ -75,10 +75,32 @@ function mostrarCargando(boton, mostrar = true) {
   }
 }
 
+// Variable para controlar si se muestra el campo de SuperUser
+let mostrandoCampoSuperUser = false;
+
+function toggleSuperUserField() {
+  mostrandoCampoSuperUser = !mostrandoCampoSuperUser;
+  
+  const superUserField = document.getElementById('superuser-field');
+  const toggleBtn = document.getElementById('toggle-superuser-btn');
+  
+  if (mostrandoCampoSuperUser) {
+    superUserField.style.display = 'block';
+    toggleBtn.innerHTML = '<i class="fas fa-user-shield"></i> Ocultar campo SuperUser';
+    toggleBtn.style.background = '#dc3545';
+  } else {
+    superUserField.style.display = 'none';
+    toggleBtn.innerHTML = '<i class="fas fa-user-shield"></i> Registrar como SuperUser';
+    toggleBtn.style.background = '#6c757d';
+    document.getElementById("reg-superuser-code").value = '';
+  }
+}
+
 async function registrar() {
   const username = document.getElementById("reg-username").value.trim();
   const email = document.getElementById("reg-email").value.trim();
   const password = document.getElementById("reg-password").value;
+  const superUserCode = document.getElementById("reg-superuser-code").value.trim();
   const boton = event.target;
 
   if (!username || !email || !password) {
@@ -90,10 +112,23 @@ async function registrar() {
   limpiarMensaje();
 
   try {
+    const datosRegistro = { 
+      username, 
+      email, 
+      password 
+    };
+    
+    // Si hay código de SuperUser, agregarlo a la petición
+    if (superUserCode) {
+      datosRegistro.rol = 'SuperUser';
+      datosRegistro.superUserCode = superUserCode;
+      console.log('Intentando registrar como SuperUser');
+    }
+    
     const respuesta = await fetch("/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify(datosRegistro)
     });
 
     const data = await respuesta.json();
@@ -104,6 +139,12 @@ async function registrar() {
       document.getElementById("reg-username").value = "";
       document.getElementById("reg-email").value = "";
       document.getElementById("reg-password").value = "";
+      document.getElementById("reg-superuser-code").value = "";
+      
+      // Ocultar campo de SuperUser si estaba visible
+      if (mostrandoCampoSuperUser) {
+        toggleSuperUserField();
+      }
       
       // Cambiar automáticamente al formulario de login después de registro exitoso
       setTimeout(() => {
@@ -150,26 +191,32 @@ async function iniciarSesion() {
     if (respuesta.ok) {
       mostrarMensaje(`🎉 ¡Bienvenido, ${data.user.username}!`, false);
       
-      // Debug: mostrar información en consola
       console.log('Login exitoso - Usuario:', data.user);
       
-      // El backend no usa JWT, así que no esperamos token
-      // Solo guardamos la información del usuario
       const usuarioParaGuardar = JSON.stringify(data.user);
       console.log('Datos que se van a guardar:', usuarioParaGuardar);
       
       localStorage.setItem('usuario', usuarioParaGuardar);
       console.log('Usuario guardado en localStorage');
       
-      // Verificar que realmente se guardó
       const usuarioGuardado = localStorage.getItem('usuario');
       console.log('Verificación - Usuario guardado:', usuarioGuardado);
       console.log('Todas las claves después del guardado:', Object.keys(localStorage));
       
-      // Redirigir al dashboard después de 1.5 segundos
+      // Determinar página de destino según el rol
+      const rol = data.user.rol || 'Usuario';
+      let paginaDestino = 'my-tickets.html'; // Por defecto para usuarios normales
+      
+      if (['SuperUser', 'Administrador'].includes(rol)) {
+        paginaDestino = 'dashboard.html';
+      }
+      
+      console.log(`Usuario con rol ${rol}, redirigiendo a ${paginaDestino}`);
+      
+      // Redirigir según el rol después de 1.5 segundos
       setTimeout(() => {
-        console.log('Redirigiendo al dashboard...');
-        window.location.href = 'dashboard.html';
+        console.log('Redirigiendo a:', paginaDestino);
+        window.location.href = paginaDestino;
       }, 1500);
     } else {
       mostrarMensaje(`❌ ${data.message}`, true);
