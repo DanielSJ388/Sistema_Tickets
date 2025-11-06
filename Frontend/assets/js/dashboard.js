@@ -4,6 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const usuario = inicializarAuth('dashboard');
   
   if (usuario) {
+    // Validar que solo SuperUser pueda acceder al Dashboard
+    if (usuario.rol !== 'SuperUser') {
+      console.warn('Acceso denegado: Solo SuperUser puede acceder al Dashboard');
+      mostrarAlerta('Acceso denegado. Solo el SuperUser puede acceder al Dashboard.', 'error');
+      setTimeout(() => {
+        window.location.href = 'my-tickets.html';
+      }, 2000);
+      return;
+    }
+    
     // 2. Inicializar eventos específicos del dashboard
     cargarTickets();
     cargarEstadisticas();
@@ -19,19 +29,25 @@ document.addEventListener('DOMContentLoaded', () => {
 async function cargarTickets() {
   try {
     console.log('Intentando cargar tickets desde backend...');
-    // Intentar cargar desde backend (usa ruta relativa para el proxy de Vite)
     const response = await fetch('/tickets');
     
     if (response.ok) {
-      const tickets = await response.json();
-      console.log('✅ Tickets cargados desde backend:', tickets.length, 'tickets encontrados');
-      console.log('Primeros tickets:', tickets.slice(0, 3));
+      const todosLosTickets = await response.json();
+      console.log('✅ Tickets cargados desde backend:', todosLosTickets.length, 'tickets encontrados');
       
-      mostrarTickets(tickets);
-      actualizarEstadisticas(tickets);
+      // Filtrar solo tickets ACTIVOS (no cerrados ni resueltos)
+      const ticketsActivos = todosLosTickets.filter(ticket => {
+        const estado = (ticket.Status || '').toLowerCase();
+        return !['closed', 'cerrado', 'resolved'].includes(estado);
+      });
+      
+      console.log(`📊 Tickets activos (no cerrados): ${ticketsActivos.length} de ${todosLosTickets.length}`);
+      
+      mostrarTickets(ticketsActivos);
+      actualizarEstadisticas(todosLosTickets); // Estadísticas con todos los tickets
       
       // Limpiar tickets locales si hay tickets del servidor
-      if (tickets.length > 0) {
+      if (ticketsActivos.length > 0) {
         const ticketsLocales = JSON.parse(localStorage.getItem('tickets')) || [];
         const ticketsLocalesReales = ticketsLocales.filter(t => !t.local);
         if (ticketsLocalesReales.length === 0 && ticketsLocales.length > 0) {
@@ -73,7 +89,13 @@ function mostrarTickets(tickets) {
   if (!lista) return;
   
   if (tickets.length === 0) {
-    lista.innerHTML = '<p>No hay tickets disponibles. ¡Crea el primero!</p>';
+    lista.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-check-circle"></i>
+        <p>No hay tickets pendientes</p>
+        <small>Todos los tickets han sido resueltos o cerrados</small>
+      </div>
+    `;
     return;
   }
   
@@ -82,10 +104,8 @@ function mostrarTickets(tickets) {
     const estado = (ticket.Status || ticket.estado || 'Open').toLowerCase();
     const prioridad = (ticket.Priority || ticket.prioridad || 'Medium').toLowerCase();
     
-    // Indicador de archivo adjunto
     const tieneArchivo = ticket.archivo_path ? '<i class="fas fa-paperclip" title="Archivo adjunto"></i>' : '';
     
-    // Información del archivo (mostrar nombre original si existe)
     const infoArchivo = ticket.archivo_nombre_original 
       ? `<small><i class="fas fa-file"></i> ${ticket.archivo_nombre_original}</small>` 
       : ticket.archivo_nombre 
@@ -106,6 +126,9 @@ function mostrarTickets(tickets) {
           <button class="btn btn-sm" onclick="abrirModalTicket(${JSON.stringify(ticket).replace(/"/g, '&quot;')})">
             <i class="fas fa-eye"></i>
             Ver
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="confirmarEliminarTicket(${JSON.stringify(ticket).replace(/"/g, '&quot;')})" title="Eliminar ticket">
+            <i class="fas fa-trash-alt"></i>
           </button>
         </div>
       </div>
@@ -199,8 +222,11 @@ function abrirModalTicket(ticket) {
   document.getElementById('modalCategoria').textContent = ticket.categoria || 'Sin categoría';
   document.getElementById('modalArchivo').innerHTML = archivoInfo;
   
-  // Configurar botón de atender con el ticket current
-  document.getElementById('btnAtender').onclick = () => abrirModalAtender(ticket);
+  // Guardar referencia global del ticket
+  window.ticketActual = ticket;
+  
+  // Configurar botón de atender
+  document.getElementById('btnAtender').onclick = () => atenderTicket();
   
   modal.style.display = 'block';
   document.body.style.overflow = 'hidden'; // Prevenir scroll en el fondo
@@ -245,8 +271,15 @@ async function cargarUsuariosDisponibles() {
       const usuarios = await response.json();
       console.log('Usuarios cargados:', usuarios);
       
+      // Filtrar solo SuperUser y Administradores
+      const usuariosValidos = usuarios.filter(usuario => 
+        usuario.rol === 'SuperUser' || usuario.rol === 'Administrador'
+      );
+      
+      console.log('Usuarios SuperUser/Administrador:', usuariosValidos.length);
+      
       select.innerHTML = '<option value="">Sin asignar</option>';
-      usuarios.forEach(usuario => {
+      usuariosValidos.forEach(usuario => {
         select.innerHTML += `
           <option value="${usuario._id || usuario.id}">
             ${usuario.username || usuario.nombre} (${usuario.rol || 'Usuario'})
@@ -271,6 +304,7 @@ async function cargarUsuariosDisponibles() {
 
 async function guardarCambiosTicket() {
   const ticket = window.ticketActual;
+  
   if (!ticket) {
     alert('Error: No hay ticket seleccionado');
     return;
@@ -412,6 +446,7 @@ function actualizarTicketLocal(datosActualizados) {
 function cerrarModalAtender() {
   const modalAtender = document.getElementById('atenderModal');
   modalAtender.style.display = 'none';
+  document.body.style.overflow = 'auto';
   window.ticketActual = null;
 }
 
@@ -513,5 +548,269 @@ function verificarTicketParaAtender() {
       console.error('Error al procesar ticket para atender:', error);
       localStorage.removeItem('ticketParaAtender');
     }
+  }
+}
+
+// --- NUEVAS FUNCIONES PARA ATENCIÓN DE TICKETS ---
+async function atenderTicket() {
+  const ticketData = window.ticketActual;
+  
+  if (!ticketData) {
+    mostrarNotificacion('Error: No se pudo cargar la información del ticket', 'error');
+    console.error('ticketData es null o undefined');
+    return;
+  }
+  
+  console.log('Abriendo modal de atención para ticket:', ticketData);
+  
+  // Abrir modal de atención
+  document.getElementById('ticketIdAtender').textContent = `#${ticketData.Number || ticketData.id}`;
+  document.getElementById('tituloTicketAtender').textContent = ticketData.Title || ticketData.titulo;
+  
+  // Establecer valores actuales
+  document.getElementById('prioridadSelect').value = ticketData.Priority || ticketData.prioridad || 'Medium';
+  document.getElementById('estadoSelect').value = ticketData.Status || ticketData.estado || 'Open';
+  document.getElementById('comentarioTicket').value = '';
+  
+  // Resetear selectores
+  document.getElementById('departamentoSelect').value = '';
+  document.getElementById('usuarioSelect').innerHTML = '<option value="">Primero selecciona un departamento</option>';
+  document.getElementById('usuarioSelect').disabled = true;
+  
+  // Cerrar modal de detalles y abrir modal de atención
+  cerrarModal();
+  document.getElementById('atenderModal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+async function cargarUsuariosPorDepartamento() {
+  const departamentoSelect = document.getElementById('departamentoSelect');
+  const usuarioSelect = document.getElementById('usuarioSelect');
+  const departamento = departamentoSelect.value;
+  
+  // Resetear selector de usuarios
+  usuarioSelect.innerHTML = '<option value="">Cargando usuarios...</option>';
+  usuarioSelect.disabled = true;
+  
+  if (!departamento) {
+    usuarioSelect.innerHTML = '<option value="">Primero selecciona un departamento</option>';
+    return;
+  }
+  
+  try {
+    console.log(`Cargando usuarios del departamento: ${departamento}`);
+    
+    const response = await fetch('/users');
+    
+    if (response.ok) {
+      const todosLosUsuarios = await response.json();
+      console.log('Total de usuarios encontrados:', todosLosUsuarios.length);
+      
+      // Filtrar usuarios del departamento seleccionado con rol Administrador
+      const usuariosDepartamento = todosLosUsuarios.filter(usuario => 
+        usuario.rol === 'Administrador' && 
+        usuario.departamento === departamento
+      );
+      
+      // También incluir SuperUsers (pueden atender cualquier ticket)
+      const superUsers = todosLosUsuarios.filter(usuario => 
+        usuario.rol === 'SuperUser'
+      );
+      
+      // Combinar ambos grupos
+      const usuariosDisponibles = [...usuariosDepartamento, ...superUsers];
+      
+      console.log(`Usuarios disponibles en ${departamento}:`, usuariosDisponibles.length);
+      
+      // Limpiar y poblar selector
+      usuarioSelect.innerHTML = '<option value="">Sin asignar</option>';
+      
+      if (usuariosDisponibles.length === 0) {
+        usuarioSelect.innerHTML += '<option value="" disabled>No hay usuarios en este departamento</option>';
+        mostrarNotificacion(`No hay usuarios disponibles en ${departamento}`, 'warning');
+      } else {
+        usuariosDisponibles.forEach(usuario => {
+          const option = document.createElement('option');
+          option.value = usuario._id;
+          
+          // Mostrar icono según el rol
+          const icono = usuario.rol === 'SuperUser' ? '👑' : '🛡️';
+          const deptInfo = usuario.departamento ? ` - ${usuario.departamento}` : '';
+          
+          option.textContent = `${icono} ${usuario.username} (${usuario.rol})${deptInfo}`;
+          usuarioSelect.appendChild(option);
+        });
+        
+        usuarioSelect.disabled = false;
+        mostrarNotificacion(`${usuariosDisponibles.length} usuario(s) disponible(s) en ${departamento}`, 'success');
+      }
+      
+    } else {
+      console.error('Error al obtener usuarios:', response.status);
+      usuarioSelect.innerHTML = '<option value="">Error al cargar usuarios</option>';
+      mostrarNotificacion('Error al cargar la lista de usuarios', 'error');
+    }
+    
+  } catch (error) {
+    console.error('Error al cargar usuarios:', error);
+    usuarioSelect.innerHTML = '<option value="">Error de conexión</option>';
+    mostrarNotificacion('No se pudo conectar con el servidor', 'error');
+  }
+}
+
+async function guardarCambiosTicket() {
+  const ticketData = window.ticketActual;
+  
+  if (!ticketData) {
+    mostrarNotificacion('Error: No se pudo cargar la información del ticket', 'error');
+    console.error('ticketData es null o undefined en guardarCambiosTicket');
+    return;
+  }
+  
+  const usuario = obtenerUsuarioActual();
+  if (!usuario) {
+    mostrarNotificacion('Error: No se pudo obtener la información del usuario', 'error');
+    return;
+  }
+  
+  // Obtener valores del formulario
+  const departamento = document.getElementById('departamentoSelect').value;
+  const usuarioAsignado = document.getElementById('usuarioSelect').value;
+  const prioridad = document.getElementById('prioridadSelect').value;
+  const estado = document.getElementById('estadoSelect').value;
+  const comentario = document.getElementById('comentarioTicket').value.trim();
+  
+  // Validaciones
+  if (!departamento) {
+    mostrarNotificacion('Por favor, selecciona un departamento', 'warning');
+    return;
+  }
+  
+  if (!usuarioAsignado) {
+    mostrarNotificacion('Por favor, asigna el ticket a un usuario', 'warning');
+    return;
+  }
+  
+  const btnGuardar = event.target;
+  btnGuardar.disabled = true;
+  btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+  
+  try {
+    const ticketNumber = ticketData.Number || ticketData.id;
+    
+    // Obtener nombre del usuario asignado para el comentario
+    const select = document.getElementById('usuarioSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    const nombreUsuarioAsignado = selectedOption.textContent.split(' ').slice(1, -1).join(' '); // Extraer nombre sin icono
+    
+    // Preparar datos de actualización
+    const updateData = {
+      Priority: prioridad,
+      Status: estado,
+      AssignedTo: usuarioAsignado,
+      comentario: comentario ? 
+        `Ticket asignado a ${nombreUsuarioAsignado} (${departamento}). ${comentario}` :
+        `Ticket asignado a ${nombreUsuarioAsignado} del departamento de ${departamento}`,
+      usuario_comentario: usuario.nombre || usuario.username,
+      usuario_id: usuario.id || usuario._id
+    };
+    
+    console.log('Actualizando ticket:', ticketNumber, 'con datos:', updateData);
+    
+    // Enviar actualización al backend
+    const response = await fetch(`/tickets/${ticketNumber}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updateData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar ticket');
+    }
+    
+    const data = await response.json();
+    console.log('Ticket actualizado exitosamente:', data);
+    
+    mostrarNotificacion(`✅ Ticket asignado a ${nombreUsuarioAsignado} - ${departamento}`, 'success');
+    
+    // Cerrar modal y recargar tickets
+    cerrarModalAtender();
+    await cargarTickets();
+    
+  } catch (error) {
+    console.error('Error al guardar cambios:', error);
+    mostrarNotificacion(`Error: ${error.message}`, 'error');
+  } finally {
+    btnGuardar.disabled = false;
+    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+  }
+}
+
+function obtenerUsuarioActual() {
+  const usuarioStr = localStorage.getItem('usuario');
+  return usuarioStr ? JSON.parse(usuarioStr) : null;
+}
+
+function cerrarModalAtender() {
+  const modalAtender = document.getElementById('atenderModal');
+  modalAtender.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  window.ticketActual = null;
+}
+
+function cerrarModal() {
+  const modal = document.getElementById('ticketModal');
+  modal.style.display = 'none';
+  document.body.style.overflow = 'auto'; // Restaurar scroll
+}
+
+// --- FUNCIONES PARA ELIMINAR TICKETS ---
+async function confirmarEliminarTicket(ticket) {
+  const confirmar = await mostrarConfirmacion(
+    `¿Estás seguro de que deseas eliminar el ticket #${ticket.Number || ticket.id}?<br><br><strong>${ticket.Title || ticket.titulo}</strong><br><br>Esta acción no se puede deshacer.`,
+    {
+      titulo: 'Eliminar Ticket',
+      textoConfirmar: 'Sí, eliminar',
+      textoCancelar: 'Cancelar',
+      tipo: 'error'
+    }
+  );
+  
+  if (confirmar) {
+    await eliminarTicket(ticket);
+  }
+}
+
+async function eliminarTicket(ticket) {
+  try {
+    const ticketId = ticket.Number || ticket.id;
+    console.log(`Eliminando ticket #${ticketId}...`);
+    
+    const response = await fetch(`/tickets/${ticketId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Ticket eliminado exitosamente:', data);
+      
+      mostrarNotificacion(`Ticket #${ticketId} eliminado exitosamente`, 'success');
+      
+      // Recargar tickets
+      await cargarTickets();
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al eliminar ticket');
+    }
+    
+  } catch (error) {
+    console.error('Error al eliminar ticket:', error);
+    await mostrarAlerta(`Error al eliminar el ticket: ${error.message}`, 'error');
   }
 }

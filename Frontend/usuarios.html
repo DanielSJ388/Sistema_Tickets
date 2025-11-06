@@ -79,10 +79,28 @@
                     
                     <div class="form-group">
                         <label for="nuevoRol">Rol <span class="required">*</span></label>
-                        <select id="nuevoRol" required>
+                        <select id="nuevoRol" required onchange="toggleDepartamento()">
                             <option value="Usuario">Usuario</option>
                             <option value="Administrador">Administrador</option>
                         </select>
+                    </div>
+                    
+                    <div class="form-group" id="departamentoGroup" style="display: none;">
+                        <label for="nuevoDepartamento">Departamento <span class="required">*</span></label>
+                        <select id="nuevoDepartamento">
+                            <option value="">Seleccionar departamento...</option>
+                            <option value="Soporte Técnico">🛠️ Soporte Técnico</option>
+                            <option value="Recursos Humanos">👥 Recursos Humanos</option>
+                            <option value="Finanzas">💰 Finanzas</option>
+                            <option value="Ventas">💼 Ventas</option>
+                            <option value="Marketing">📢 Marketing</option>
+                            <option value="Operaciones">⚙️ Operaciones</option>
+                            <option value="Desarrollo">💻 Desarrollo</option>
+                        </select>
+                        <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            Los administradores deben estar asignados a un departamento específico
+                        </small>
                     </div>
                 </form>
             </div>
@@ -100,6 +118,89 @@
         </div>
     </div>
 
+    <!-- Modal Editar Usuario -->
+    <div id="editarUsuarioModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-user-edit"></i>
+                    Editar Usuario
+                </h2>
+                <span class="close" onclick="cerrarModalEditarUsuario()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <form id="formEditarUsuario">
+                    <input type="hidden" id="editarUserId">
+                    
+                    <div class="form-group">
+                        <label for="editarUsername">Nombre de Usuario <span class="required">*</span></label>
+                        <input type="text" id="editarUsername" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editarEmail">Correo Electrónico <span class="required">*</span></label>
+                        <input type="email" id="editarEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editarRol">Rol <span class="required">*</span></label>
+                        <select id="editarRol" required onchange="toggleDepartamentoEditar()">
+                            <option value="Usuario">Usuario</option>
+                            <option value="Administrador">Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="departamentoGroupEditar" style="display: none;">
+                        <label for="editarDepartamento">Departamento <span class="required">*</span></label>
+                        <select id="editarDepartamento">
+                            <option value="">Seleccionar departamento...</option>
+                            <option value="Soporte Técnico">🛠️ Soporte Técnico</option>
+                            <option value="Recursos Humanos">👥 Recursos Humanos</option>
+                            <option value="Finanzas">💰 Finanzas</option>
+                            <option value="Ventas">💼 Ventas</option>
+                            <option value="Marketing">📢 Marketing</option>
+                            <option value="Operaciones">⚙️ Operaciones</option>
+                            <option value="Desarrollo">💻 Desarrollo</option>
+                        </select>
+                        <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            Los administradores deben estar asignados a un departamento
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="cambiarPasswordCheck" onchange="toggleCambiarPassword()">
+                            Cambiar contraseña
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" id="passwordGroupEditar" style="display: none;">
+                        <label for="editarPassword">Nueva Contraseña</label>
+                        <input type="password" id="editarPassword" minlength="6" placeholder="Dejar vacío para no cambiar">
+                        <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            Mínimo 6 caracteres
+                        </small>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="guardarCambiosUsuario()">
+                    <i class="fas fa-save"></i>
+                    Guardar Cambios
+                </button>
+                <button class="btn btn-secondary" onclick="cerrarModalEditarUsuario()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/notifications.js"></script>
     <script src="assets/js/auth-utils.js"></script>
     <script src="assets/js/sidebar-component.js"></script>
     <script src="assets/js/usuarios.js"></script>

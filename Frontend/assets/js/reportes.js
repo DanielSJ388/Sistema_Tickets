@@ -6,7 +6,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const usuario = inicializarAuth('reportes');
   
   if (usuario) {
-    console.log('Usuario autenticado:', usuario);
+    // Validar que solo SuperUser pueda acceder a Reportes
+    if (usuario.rol !== 'SuperUser') {
+      console.warn('Acceso denegado: Solo SuperUser puede acceder a Reportes');
+      mostrarAlerta('Acceso denegado. Solo el SuperUser puede acceder a los Reportes.', 'error');
+      setTimeout(() => {
+        window.location.href = 'my-tickets.html';
+      }, 2000);
+      return;
+    }
+    
+    console.log('Usuario autenticado con acceso a reportes:', usuario);
     cargarEstadisticas();
   } else {
     console.error('No se pudo autenticar el usuario');

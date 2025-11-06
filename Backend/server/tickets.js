@@ -1,12 +1,19 @@
 const mongoose = require("mongoose");
 const fs = require("fs"); // Agregar fs para manejo de archivos
 
-// 📌 Esquema para comentarios dentro del ticket
+// 📌 Esquema para comentarios dentro del ticket con soporte para archivos
 const ComentarioSchema = new mongoose.Schema({
   texto: { type: String, required: true },
   fecha: { type: Date, default: Date.now },
   usuario: { type: String, required: true },
-  usuario_id: { type: String, default: null }
+  usuario_id: { type: String, default: null },
+  // Campos para archivos adjuntos en comentarios
+  archivo_path: { type: String, default: null },
+  archivo_nombre_original: { type: String, default: null },
+  archivo_nombre_servidor: { type: String, default: null },
+  archivo_size: { type: Number, default: null },
+  archivo_mimetype: { type: String, default: null },
+  es_imagen: { type: Boolean, default: false }
 });
 
 // 📌 Modelo Ticket actualizado con comentarios

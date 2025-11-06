@@ -32,25 +32,63 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('No hay usuario, mostrando formulario de login');
 });
 
-// Funciones para alternar entre formularios
+// Funciones mejoradas para alternar entre formularios con animación
 function mostrarLogin() {
   const registroForm = document.getElementById("registro-form");
   const loginForm = document.getElementById("login-form");
   
-  registroForm.classList.add("hidden");
-  loginForm.classList.remove("hidden");
-  loginForm.classList.add("fade-in");
+  // Limpiar mensajes
   limpiarMensaje();
+  
+  // Animar salida del registro
+  registroForm.classList.add("slide-out-left");
+  
+  // Después de la animación, ocultar registro y mostrar login
+  setTimeout(() => {
+    registroForm.classList.add("hidden");
+    registroForm.classList.remove("slide-out-left");
+    
+    // Mostrar login con animación
+    loginForm.classList.remove("hidden");
+    loginForm.classList.add("slide-in-right");
+    
+    // Quitar clase de animación después de completarse
+    setTimeout(() => {
+      loginForm.classList.remove("slide-in-right");
+    }, 400);
+    
+    // Focus en el primer input
+    document.getElementById("login-identifier").focus();
+  }, 400);
 }
 
 function mostrarRegistro() {
   const loginForm = document.getElementById("login-form");
   const registroForm = document.getElementById("registro-form");
   
-  loginForm.classList.add("hidden");
-  registroForm.classList.remove("hidden");
-  registroForm.classList.add("fade-in");
+  // Limpiar mensajes
   limpiarMensaje();
+  
+  // Animar salida del login
+  loginForm.classList.add("slide-out-right");
+  
+  // Después de la animación, ocultar login y mostrar registro
+  setTimeout(() => {
+    loginForm.classList.add("hidden");
+    loginForm.classList.remove("slide-out-right");
+    
+    // Mostrar registro con animación
+    registroForm.classList.remove("hidden");
+    registroForm.classList.add("slide-in-left");
+    
+    // Quitar clase de animación después de completarse
+    setTimeout(() => {
+      registroForm.classList.remove("slide-in-left");
+    }, 400);
+    
+    // Focus en el primer input
+    document.getElementById("reg-username").focus();
+  }, 400);
 }
 
 function limpiarMensaje() {
@@ -205,9 +243,10 @@ async function iniciarSesion() {
       
       // Determinar página de destino según el rol
       const rol = data.user.rol || 'Usuario';
-      let paginaDestino = 'my-tickets.html'; // Por defecto para usuarios normales
+      let paginaDestino = 'my-tickets.html'; // Por defecto para todos
       
-      if (['SuperUser', 'Administrador'].includes(rol)) {
+      // Solo SuperUser va al Dashboard
+      if (rol === 'SuperUser') {
         paginaDestino = 'dashboard.html';
       }
       

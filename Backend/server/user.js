@@ -18,6 +18,11 @@ const UserSchema = new mongoose.Schema({
     default: 'Usuario', 
     enum: ['SuperUser', 'Administrador', 'Usuario'] 
   },
+  departamento: {
+    type: String,
+    default: null,
+    enum: [null, 'Soporte Técnico', 'Recursos Humanos', 'Finanzas', 'Ventas', 'Marketing', 'Operaciones', 'Desarrollo']
+  },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true }
@@ -29,7 +34,7 @@ const User = mongoose.model("User", UserSchema);
  * @param {Object} datos - { username, email, password, rol, createdBy, superUserCode }
  */
 async function registrarUsuario(datos) {
-  const { username, email, password, rol, createdBy, superUserCode } = datos || {};
+  const { username, email, password, rol, departamento, createdBy, superUserCode } = datos || {};
 
   if (!username || !email || !password) {
     return { ok: false, message: "Faltan datos: username, email y password son obligatorios" };
@@ -102,12 +107,14 @@ async function registrarUsuario(datos) {
     email: emailClean, 
     password: passwordHash,
     rol: rolFinal,
+    departamento: departamento || null,
     createdBy: createdBy || null
   });
   
   await nuevoUsuario.save();
   
-  const mensajeRol = rolFinal === 'SuperUser' ? ' como SUPERUSER' : '';
+  const mensajeRol = rolFinal === 'SuperUser' ? ' como SUPERUSER' : 
+                     rolFinal === 'Administrador' ? ` como Administrador en ${departamento}` : '';
   return { ok: true, message: `Usuario registrado exitosamente${mensajeRol} ✅` };
 }
 
@@ -154,14 +161,14 @@ async function iniciarSesion(datos) {
 }
 
 async function obtenerUsuarios() {
-  return await User.find({ isActive: true }, 'username email rol createdAt');
+  return await User.find({ isActive: true }, 'username email rol departamento createdAt');
 }
 
 /**
  * Cambiar rol de un usuario (solo SuperUser)
  */
 async function cambiarRolUsuario(datos) {
-  const { userId, nuevoRol, adminId } = datos || {};
+  const { userId, nuevoRol, departamento, adminId } = datos || {};
   
   if (!userId || !nuevoRol || !adminId) {
     return { ok: false, message: "Faltan datos requeridos" };
@@ -183,10 +190,16 @@ async function cambiarRolUsuario(datos) {
     return { ok: false, message: "No se puede modificar el rol de SuperUser" };
   }
   
+  // Si se está convirtiendo a Administrador, validar departamento
+  if (nuevoRol === 'Administrador' && !departamento) {
+    return { ok: false, message: "Los Administradores deben tener un departamento asignado" };
+  }
+  
   usuario.rol = nuevoRol;
+  usuario.departamento = nuevoRol === 'Administrador' ? departamento : null;
   await usuario.save();
   
-  return { ok: true, message: "Rol actualizado exitosamente" };
+  return { ok: true, message: "Rol y departamento actualizados exitosamente" };
 }
 
 /**
@@ -265,11 +278,91 @@ async function cambiarPassword(datos) {
   return { ok: true, message: "Contraseña actualizada exitosamente ✅" };
 }
 
+/**
+ * Actualizar usuario (solo SuperUser puede modificar Administradores)
+ */
+async function actualizarUsuario(datos) {
+  const { userId, username, email, password, rol, departamento, adminId } = datos || {};
+  
+  if (!userId || !adminId) {
+    return { ok: false, message: "Faltan datos requeridos" };
+  }
+  
+  // Verificar que quien hace el cambio es SuperUser
+  const admin = await User.findById(adminId);
+  if (!admin || admin.rol !== 'SuperUser') {
+    return { ok: false, message: "Solo SuperUser puede modificar usuarios" };
+  }
+  
+  const usuario = await User.findById(userId);
+  if (!usuario) {
+    return { ok: false, message: "Usuario no encontrado" };
+  }
+  
+  // No se puede modificar el SuperUser
+  if (usuario.rol === 'SuperUser') {
+    return { ok: false, message: "No se puede modificar el SuperUser" };
+  }
+  
+  // Validar que Administradores tengan departamento
+  if (rol === 'Administrador' && !departamento) {
+    return { ok: false, message: "Los Administradores deben tener un departamento asignado" };
+  }
+  
+  // Verificar si el username o email ya existen (excepto el usuario actual)
+  if (username && username !== usuario.username) {
+    const existeUsername = await User.findOne({ username: username.trim(), _id: { $ne: userId } });
+    if (existeUsername) {
+      return { ok: false, message: "El nombre de usuario ya está en uso" };
+    }
+    usuario.username = username.trim();
+  }
+  
+  if (email && email !== usuario.email) {
+    const existeEmail = await User.findOne({ email: email.toLowerCase().trim(), _id: { $ne: userId } });
+    if (existeEmail) {
+      return { ok: false, message: "El correo electrónico ya está en uso" };
+    }
+    usuario.email = email.toLowerCase().trim();
+  }
+  
+  // Actualizar rol y departamento
+  if (rol) {
+    usuario.rol = rol;
+    usuario.departamento = rol === 'Administrador' ? departamento : null;
+  }
+  
+  // Actualizar contraseña si se proporciona
+  if (password && password.trim()) {
+    if (password.length < 6) {
+      return { ok: false, message: "La contraseña debe tener al menos 6 caracteres" };
+    }
+    const salt = await bcrypt.genSalt(10);
+    usuario.password = await bcrypt.hash(password, salt);
+  }
+  
+  await usuario.save();
+  
+  const mensajePassword = password ? ' (contraseña actualizada)' : '';
+  return { 
+    ok: true, 
+    message: `Usuario actualizado exitosamente${mensajePassword}`,
+    user: {
+      id: usuario._id.toString(),
+      username: usuario.username,
+      email: usuario.email,
+      rol: usuario.rol,
+      departamento: usuario.departamento
+    }
+  };
+}
+
 module.exports = { 
   registrarUsuario, 
   iniciarSesion, 
   obtenerUsuarios, 
   cambiarPassword,
   cambiarRolUsuario,
-  desactivarUsuario
+  desactivarUsuario,
+  actualizarUsuario
 };

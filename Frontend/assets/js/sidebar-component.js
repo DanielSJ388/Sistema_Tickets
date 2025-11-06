@@ -23,7 +23,7 @@ class SidebarComponent {
         </div>
         
         <ul class="sidebar-menu">
-          ${['SuperUser', 'Administrador'].includes(rol) ? `
+          ${rol === 'SuperUser' ? `
           <li class="${this.activeMenuItem === 'dashboard' ? 'active' : ''}">
             <a href="dashboard.html">
               <i class="fas fa-tachometer-alt"></i>
@@ -32,7 +32,7 @@ class SidebarComponent {
           </li>
           ` : ''}
           
-          ${['SuperUser', 'Administrador'].includes(rol) ? `
+          ${rol === 'SuperUser' ? `
           <li class="${this.activeMenuItem === 'tickets' ? 'active' : ''}">
             <a href="list-ticket.html">
               <i class="fas fa-clipboard-list"></i>
@@ -48,14 +48,16 @@ class SidebarComponent {
             </a>
           </li>
           
+          ${rol === 'Usuario' ? `
           <li class="${this.activeMenuItem === 'nuevo' ? 'active' : ''}">
             <a href="send_ticket.html">
               <i class="fas fa-plus-circle"></i>
               <span>Nuevo Ticket</span>
             </a>
           </li>
+          ` : ''}
           
-          ${['SuperUser', 'Administrador'].includes(rol) ? `
+          ${rol === 'SuperUser' ? `
           <li class="${this.activeMenuItem === 'reportes' ? 'active' : ''}">
             <a href="reportes.html">
               <i class="fas fa-chart-bar"></i>

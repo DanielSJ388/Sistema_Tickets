@@ -207,12 +207,28 @@
                 <div class="atender-form">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="usuarioSelect">Asignar a Usuario:</label>
-                            <select id="usuarioSelect" class="form-control">
-                                <option value="">Sin asignar</option>
+                            <label for="departamentoSelect">Departamento <span class="required">*</span></label>
+                            <select id="departamentoSelect" class="form-control" onchange="cargarUsuariosPorDepartamento()">
+                                <option value="">Seleccionar departamento...</option>
+                                <option value="Soporte Técnico">🛠️ Soporte Técnico</option>
+                                <option value="Recursos Humanos">👥 Recursos Humanos</option>
+                                <option value="Finanzas">💰 Finanzas</option>
+                                <option value="Ventas">💼 Ventas</option>
+                                <option value="Marketing">📢 Marketing</option>
+                                <option value="Operaciones">⚙️ Operaciones</option>
+                                <option value="Desarrollo">💻 Desarrollo</option>
                             </select>
                         </div>
                         
+                        <div class="form-group">
+                            <label for="usuarioSelect">Asignar a Usuario:</label>
+                            <select id="usuarioSelect" class="form-control" disabled>
+                                <option value="">Primero selecciona un departamento</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="prioridadSelect">Prioridad:</label>
                             <select id="prioridadSelect" class="form-control">
@@ -221,9 +237,7 @@
                                 <option value="High">Alta</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="form-row">
+                        
                         <div class="form-group">
                             <label for="estadoSelect">Estado:</label>
                             <select id="estadoSelect" class="form-control">
@@ -346,6 +360,7 @@
     </div>
 
     <!-- Cargar el componente sidebar primero -->
+    <script src="assets/js/notifications.js"></script>
     <script src="assets/js/auth-utils.js"></script>
     <script src="assets/js/sidebar-component.js"></script>
     <script src="assets/js/dashboard.js"></script>

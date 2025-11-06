@@ -114,11 +114,37 @@
                     </button>
                 </div>
                 <div class="chat-input-container">
-                    <textarea 
-                        id="chatInput" 
-                        placeholder="Escribe tu mensaje..."
-                        rows="2"
-                    ></textarea>
+                    <input 
+                        type="file" 
+                        id="chatFileInput" 
+                        accept="image/*,.pdf,.doc,.docx,.txt"
+                        style="display: none;"
+                        onchange="handleFileSelect(event)"
+                    >
+                    <button 
+                        class="btn btn-secondary btn-sm" 
+                        onclick="document.getElementById('chatFileInput').click()"
+                        title="Adjuntar archivo"
+                        id="btnAdjuntarArchivo"
+                    >
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <div class="chat-input-wrapper">
+                        <textarea 
+                            id="chatInput" 
+                            placeholder="Escribe tu mensaje..."
+                            rows="2"
+                        ></textarea>
+                        <div id="filePreview" class="file-preview" style="display: none;">
+                            <div class="file-preview-content">
+                                <i class="fas fa-file"></i>
+                                <span id="filePreviewName"></span>
+                                <button class="btn-remove-file" onclick="removeFile()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <button class="btn btn-primary" id="btnEnviarMensaje">
                         <i class="fas fa-paper-plane"></i>
                         Enviar
@@ -161,6 +187,7 @@
         </div>
     </div>
 
+    <script src="assets/js/notifications.js"></script>
     <script src="assets/js/auth-utils.js"></script>
     <script src="assets/js/sidebar-component.js"></script>
     <script src="assets/js/my-tickets.js"></script>

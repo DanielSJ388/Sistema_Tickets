@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Autenticación - SistemaTickets</title>
   <link rel="stylesheet" href="assets/css/auth.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="auth-container">
@@ -41,7 +43,7 @@
           autocomplete="off"
         >
         <small class="superuser-hint">
-          <i class="fas fa-info-circle"></i> 
+          <i class="fas fa-crown"></i> 
           Introduce el código secreto para registrarte como SuperUser
         </small>
       </div>
@@ -53,13 +55,18 @@
         id="toggle-superuser-btn"
         onclick="toggleSuperUserField()"
       >
-        <i class="fas fa-user-shield"></i> Registrar como SuperUser
+        <i class="fas fa-user-shield"></i>
+        <span>Registrar como SuperUser</span>
       </button>
       
-      <button class="btn-primary" onclick="registrar()">Crear Cuenta</button>
+      <button class="btn-primary" onclick="registrar()">
+        <span>Crear Cuenta</span>
+      </button>
       
       <div class="toggle-section">
-        <span class="toggle-link" onclick="mostrarLogin()">¿Ya tienes cuenta? Inicia sesión</span>
+        <span class="toggle-link" onclick="mostrarLogin()">
+          ¿Ya tienes cuenta? <strong>Inicia sesión</strong>
+        </span>
       </div>
     </div>
 
@@ -78,16 +85,21 @@
         <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
       </div>
       
-      <button class="btn-primary" onclick="iniciarSesion()">Iniciar Sesión</button>
+      <button class="btn-primary" onclick="iniciarSesion()">
+        <span>Iniciar Sesión</span>
+      </button>
       
       <div class="toggle-section">
-        <span class="toggle-link" onclick="mostrarRegistro()">¿No tienes cuenta? Regístrate</span>
+        <span class="toggle-link" onclick="mostrarRegistro()">
+          ¿No tienes cuenta? <strong>Regístrate</strong>
+        </span>
       </div>
     </div>
 
     <div id="mensaje"></div>
   </div>
 
+  <script src="assets/js/notifications.js"></script>
   <script src="assets/js/auth.js"></script>
 </body>
 </html>
